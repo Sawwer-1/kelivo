@@ -63,42 +63,64 @@ final class DpapiKeyVault implements KeyVault {
   DpapiKeyVault() {
     _protect = _crypt32
         .lookup<
-            NativeFunction<
-                Int32 Function(
-                  Pointer<_DataBlob>,
-                  Pointer<ffi.Utf16>,
-                  Pointer<_DataBlob>,
-                  Pointer<Void>,
-                  Pointer<Void>,
-                  Uint32,
-                  Pointer<_DataBlob>,
-                )>>('CryptProtectData')
+          NativeFunction<
+            Int32 Function(
+              Pointer<_DataBlob>,
+              Pointer<ffi.Utf16>,
+              Pointer<_DataBlob>,
+              Pointer<Void>,
+              Pointer<Void>,
+              Uint32,
+              Pointer<_DataBlob>,
+            )
+          >
+        >('CryptProtectData')
         .asFunction();
     _unprotect = _crypt32
         .lookup<
-            NativeFunction<
-                Int32 Function(
-                  Pointer<_DataBlob>,
-                  Pointer<ffi.Utf16>,
-                  Pointer<_DataBlob>,
-                  Pointer<Void>,
-                  Pointer<Void>,
-                  Uint32,
-                  Pointer<_DataBlob>,
-                )>>('CryptUnprotectData')
+          NativeFunction<
+            Int32 Function(
+              Pointer<_DataBlob>,
+              Pointer<ffi.Utf16>,
+              Pointer<_DataBlob>,
+              Pointer<Void>,
+              Pointer<Void>,
+              Uint32,
+              Pointer<_DataBlob>,
+            )
+          >
+        >('CryptUnprotectData')
         .asFunction();
-    _localFree = _kernel32.lookup<NativeFunction<Pointer<Void> Function(Pointer<Void>)>>('LocalFree').asFunction();
+    _localFree = _kernel32
+        .lookup<NativeFunction<Pointer<Void> Function(Pointer<Void>)>>(
+          'LocalFree',
+        )
+        .asFunction();
   }
 
   final DynamicLibrary _crypt32 = DynamicLibrary.open('crypt32.dll');
   final DynamicLibrary _kernel32 = DynamicLibrary.open('kernel32.dll');
 
-  late final int Function(Pointer<_DataBlob>, Pointer<ffi.Utf16>,
-      Pointer<_DataBlob>, Pointer<Void>, Pointer<Void>, int, Pointer<_DataBlob>)
-      _protect;
-  late final int Function(Pointer<_DataBlob>, Pointer<ffi.Utf16>,
-      Pointer<_DataBlob>, Pointer<Void>, Pointer<Void>, int, Pointer<_DataBlob>)
-      _unprotect;
+  late final int Function(
+    Pointer<_DataBlob>,
+    Pointer<ffi.Utf16>,
+    Pointer<_DataBlob>,
+    Pointer<Void>,
+    Pointer<Void>,
+    int,
+    Pointer<_DataBlob>,
+  )
+  _protect;
+  late final int Function(
+    Pointer<_DataBlob>,
+    Pointer<ffi.Utf16>,
+    Pointer<_DataBlob>,
+    Pointer<Void>,
+    Pointer<Void>,
+    int,
+    Pointer<_DataBlob>,
+  )
+  _unprotect;
   late final Pointer<Void> Function(Pointer<Void>) _localFree;
 
   @override
@@ -144,9 +166,7 @@ final class DpapiKeyVault implements KeyVault {
       );
       if (ok == 0) throw StateError('CryptProtectData failed');
       final out = outBlob.ref;
-      final bytes = Uint8List.fromList(
-        out.pbData.asTypedList(out.cbData),
-      );
+      final bytes = Uint8List.fromList(out.pbData.asTypedList(out.cbData));
       _localFree(out.pbData.cast<Void>());
       return bytes;
     });
@@ -165,15 +185,16 @@ final class DpapiKeyVault implements KeyVault {
       );
       if (ok == 0) throw StateError('CryptUnprotectData failed');
       final out = outBlob.ref;
-      final bytes = Uint8List.fromList(
-        out.pbData.asTypedList(out.cbData),
-      );
+      final bytes = Uint8List.fromList(out.pbData.asTypedList(out.cbData));
       _localFree(out.pbData.cast<Void>());
       return bytes;
     });
   }
 
-  R _withBlob<R>(Uint8List bytes, R Function(Pointer<_DataBlob>, Pointer<_DataBlob>) body) {
+  R _withBlob<R>(
+    Uint8List bytes,
+    R Function(Pointer<_DataBlob>, Pointer<_DataBlob>) body,
+  ) {
     final inBlob = ffi.malloc<_DataBlob>();
     final dataBuf = ffi.malloc<Uint8>(bytes.isEmpty ? 1 : bytes.length);
     final outBlob = ffi.malloc<_DataBlob>();
