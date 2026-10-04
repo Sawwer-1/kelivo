@@ -1885,6 +1885,8 @@ class _DesktopAssistantBasicPaneState
     extends State<_DesktopAssistantBasicPane> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _maxTokensCtrl;
+  late final TextEditingController _tokenBudgetSoftCtrl;
+  late final TextEditingController _tokenBudgetHardCtrl;
   bool _hoverChatModel = false;
   bool _hoverBgChooser = false;
   final GlobalKey _avatarKey = GlobalKey();
@@ -1895,6 +1897,12 @@ class _DesktopAssistantBasicPaneState
     final a = context.read<AssistantProvider>().getById(widget.assistantId)!;
     _nameCtrl = TextEditingController(text: a.name);
     _maxTokensCtrl = TextEditingController(text: a.maxTokens?.toString() ?? '');
+    _tokenBudgetSoftCtrl = TextEditingController(
+      text: a.tokenBudgetSoftCap?.toString() ?? '',
+    );
+    _tokenBudgetHardCtrl = TextEditingController(
+      text: a.tokenBudgetHardCap?.toString() ?? '',
+    );
   }
 
   @override
@@ -1904,6 +1912,8 @@ class _DesktopAssistantBasicPaneState
       final a = context.read<AssistantProvider>().getById(widget.assistantId)!;
       _nameCtrl.text = a.name;
       _maxTokensCtrl.text = a.maxTokens?.toString() ?? '';
+      _tokenBudgetSoftCtrl.text = a.tokenBudgetSoftCap?.toString() ?? '';
+      _tokenBudgetHardCtrl.text = a.tokenBudgetHardCap?.toString() ?? '';
     }
   }
 
@@ -1911,6 +1921,8 @@ class _DesktopAssistantBasicPaneState
   void dispose() {
     _nameCtrl.dispose();
     _maxTokensCtrl.dispose();
+    _tokenBudgetSoftCtrl.dispose();
+    _tokenBudgetHardCtrl.dispose();
     super.dispose();
   }
 
@@ -2394,6 +2406,129 @@ class _DesktopAssistantBasicPaneState
                           a.copyWith(
                             maxTokens: n,
                             clearMaxTokens: trimmed.isEmpty,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            sectionDivider(),
+            // Token budget caps (AAA costguards lineage)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  labelWithHelp(
+                    l10n.assistantEditTokenBudgetSoftTitle,
+                    l10n.assistantEditTokenBudgetSoftDescription,
+                  ),
+                  const SizedBox(height: 8),
+                  Focus(
+                    onFocusChange: (has) {
+                      if (!has) {
+                        final trimmed = _tokenBudgetSoftCtrl.text.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            tokenBudgetSoftCap: n,
+                            clearTokenBudgetSoftCap: trimmed.isEmpty,
+                          ),
+                        );
+                      }
+                    },
+                    child: TextField(
+                      controller: _tokenBudgetSoftCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: l10n.assistantEditTokenBudgetSoftHint,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 20,
+                        ),
+                        filled: true,
+                        fillColor: context.appColors.surfaceFill,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.outlineVariant.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.primary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 13.5),
+                      onSubmitted: (v) {
+                        final trimmed = v.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            tokenBudgetSoftCap: n,
+                            clearTokenBudgetSoftCap: trimmed.isEmpty,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  labelWithHelp(
+                    l10n.assistantEditTokenBudgetHardTitle,
+                    l10n.assistantEditTokenBudgetHardDescription,
+                  ),
+                  const SizedBox(height: 8),
+                  Focus(
+                    onFocusChange: (has) {
+                      if (!has) {
+                        final trimmed = _tokenBudgetHardCtrl.text.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            tokenBudgetHardCap: n,
+                            clearTokenBudgetHardCap: trimmed.isEmpty,
+                          ),
+                        );
+                      }
+                    },
+                    child: TextField(
+                      controller: _tokenBudgetHardCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: l10n.assistantEditTokenBudgetHardHint,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 20,
+                        ),
+                        filled: true,
+                        fillColor: context.appColors.surfaceFill,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.outlineVariant.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.primary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 13.5),
+                      onSubmitted: (v) {
+                        final trimmed = v.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            tokenBudgetHardCap: n,
+                            clearTokenBudgetHardCap: trimmed.isEmpty,
                           ),
                         );
                       },

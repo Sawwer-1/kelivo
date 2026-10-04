@@ -1034,6 +1034,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantEditMaxTokensHint => 'Unlimited';
 
   @override
+  String get assistantEditTokenBudgetSoftTitle => 'Token Budget Soft Cap';
+
+  @override
+  String get assistantEditTokenBudgetSoftDescription =>
+      'One-time wrap-up notice once a generation\'s cumulative tokens reach this';
+
+  @override
+  String get assistantEditTokenBudgetSoftHint => 'Off';
+
+  @override
+  String get assistantEditTokenBudgetHardTitle => 'Token Budget Hard Cap';
+
+  @override
+  String get assistantEditTokenBudgetHardDescription =>
+      'Auto-stop the generation once its cumulative tokens reach this';
+
+  @override
+  String get assistantEditTokenBudgetHardHint => 'Off';
+
+  @override
   String get assistantEditChatBackgroundTitle => 'Chat Background';
 
   @override

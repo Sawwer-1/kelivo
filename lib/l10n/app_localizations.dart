@@ -1978,6 +1978,42 @@ abstract class AppLocalizations {
   /// **'Unlimited'**
   String get assistantEditMaxTokensHint;
 
+  /// No description provided for @assistantEditTokenBudgetSoftTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Token Budget Soft Cap'**
+  String get assistantEditTokenBudgetSoftTitle;
+
+  /// No description provided for @assistantEditTokenBudgetSoftDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time wrap-up notice once a generation\'s cumulative tokens reach this'**
+  String get assistantEditTokenBudgetSoftDescription;
+
+  /// No description provided for @assistantEditTokenBudgetSoftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get assistantEditTokenBudgetSoftHint;
+
+  /// No description provided for @assistantEditTokenBudgetHardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Token Budget Hard Cap'**
+  String get assistantEditTokenBudgetHardTitle;
+
+  /// No description provided for @assistantEditTokenBudgetHardDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-stop the generation once its cumulative tokens reach this'**
+  String get assistantEditTokenBudgetHardDescription;
+
+  /// No description provided for @assistantEditTokenBudgetHardHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get assistantEditTokenBudgetHardHint;
+
   /// No description provided for @assistantEditChatBackgroundTitle.
   ///
   /// In en, this message translates to:

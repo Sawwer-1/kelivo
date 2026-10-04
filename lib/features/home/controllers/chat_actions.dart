@@ -2280,6 +2280,8 @@ class ChatActions {
         temperature: assistant?.temperature,
         topP: assistant?.topP,
         maxTokens: assistant?.maxTokens,
+        tokenBudgetSoftCap: assistant?.tokenBudgetSoftCap,
+        tokenBudgetHardCap: assistant?.tokenBudgetHardCap,
         tools: ctx.toolDefs.isEmpty ? null : ctx.toolDefs,
         onToolCall: onToolCall,
         extraHeaders: ctx.extraHeaders,

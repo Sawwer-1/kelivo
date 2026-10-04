@@ -93,6 +93,10 @@ class Assistant {
   recentChatsSummaryMessageCount; // refresh summary after N new messages
   final bool appendCurrentTimeToUserMessage;
   final bool useIso8601TimeFormat;
+  // Cost guards (AAA costguards lineage): null = no budget.
+  // Soft cap injects a wrap-up notice; hard cap auto-stops the generation.
+  final int? tokenBudgetSoftCap;
+  final int? tokenBudgetHardCap;
   // Preset conversation messages (ordered)
   final List<PresetMessage> presetMessages;
   // Regex replacement rules
@@ -143,6 +147,8 @@ class Assistant {
     this.recentChatsSummaryMessageCount = defaultRecentChatsSummaryMessageCount,
     this.appendCurrentTimeToUserMessage = false,
     this.useIso8601TimeFormat = false,
+    this.tokenBudgetSoftCap,
+    this.tokenBudgetHardCap,
     this.presetMessages = const <PresetMessage>[],
     this.regexRules = const <AssistantRegex>[],
   });
@@ -191,6 +197,10 @@ class Assistant {
     int? recentChatsSummaryMessageCount,
     bool? appendCurrentTimeToUserMessage,
     bool? useIso8601TimeFormat,
+    int? tokenBudgetSoftCap,
+    int? tokenBudgetHardCap,
+    bool clearTokenBudgetSoftCap = false,
+    bool clearTokenBudgetHardCap = false,
     List<PresetMessage>? presetMessages,
     List<AssistantRegex>? regexRules,
     bool clearChatModel = false,
@@ -274,6 +284,12 @@ class Assistant {
       appendCurrentTimeToUserMessage:
           appendCurrentTimeToUserMessage ?? this.appendCurrentTimeToUserMessage,
       useIso8601TimeFormat: useIso8601TimeFormat ?? this.useIso8601TimeFormat,
+      tokenBudgetSoftCap: clearTokenBudgetSoftCap
+          ? null
+          : (tokenBudgetSoftCap ?? this.tokenBudgetSoftCap),
+      tokenBudgetHardCap: clearTokenBudgetHardCap
+          ? null
+          : (tokenBudgetHardCap ?? this.tokenBudgetHardCap),
       presetMessages: presetMessages ?? this.presetMessages,
       regexRules: regexRules ?? this.regexRules,
     );
@@ -323,6 +339,8 @@ class Assistant {
     'recentChatsSummaryMessageCount': recentChatsSummaryMessageCount,
     'appendCurrentTimeToUserMessage': appendCurrentTimeToUserMessage,
     'useIso8601TimeFormat': useIso8601TimeFormat,
+    'tokenBudgetSoftCap': tokenBudgetSoftCap,
+    'tokenBudgetHardCap': tokenBudgetHardCap,
     'presetMessages': PresetMessage.encodeList(presetMessages),
     'regexRules': regexRules.map((e) => e.toJson()).toList(),
   };
@@ -458,6 +476,8 @@ class Assistant {
     appendCurrentTimeToUserMessage:
         json['appendCurrentTimeToUserMessage'] as bool? ?? false,
     useIso8601TimeFormat: json['useIso8601TimeFormat'] as bool? ?? false,
+    tokenBudgetSoftCap: (json['tokenBudgetSoftCap'] as num?)?.toInt(),
+    tokenBudgetHardCap: (json['tokenBudgetHardCap'] as num?)?.toInt(),
     presetMessages: (() {
       try {
         return PresetMessage.decodeList(json['presetMessages']);

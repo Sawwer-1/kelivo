@@ -1,10 +1,52 @@
 import 'dart:async';
+import 'dart:io';
 
 import '../../../../utils/mcp_structured_image.dart';
 import '../../../models/token_usage.dart';
 import '../chat_api_helpers.dart';
 import '../stream/stream_chunk.dart';
 import '../stream/stream_chunk_emit.dart';
+import '../stream/stream_chunk_ids.dart';
+
+/// Hard cap on client-tool rounds per generation (AAA costguards lineage).
+/// A model stuck issuing tool calls must not burn tokens forever: the loop
+/// stops with a visible notice instead of running unbounded. Per call-site
+/// override is possible, but the default applies to every provider path.
+const int kDefaultMaxToolRounds = 256;
+
+/// Tool result content above this size is truncated before it enters the
+/// transcript; the full output is spilled to a local file so the model can
+/// still page through it with file tools.
+const int kToolOutputMaxChars = 32 * 1024;
+
+StreamChunk _guardNotice(String text) {
+  // A dedicated source id keeps the notice a separate text part that never
+  // merges into model output.
+  return TextDelta(id: StreamChunkIds('generation-guard').text(), text: text);
+}
+
+String _roundsExhaustedNotice(int maxRounds) =>
+    '\n\n[Generation guard] Tool rounds exceeded the limit of $maxRounds; '
+    'the loop was stopped. Wrap up now and answer with what you have.\n';
+
+String? _spillToolOutput(EmitToolCall call, String content) {
+  try {
+    final dirPath = [
+      Directory.systemTemp.path,
+      'kelivo_tool_outputs',
+    ].join(Platform.pathSeparator);
+    Directory(dirPath).createSync(recursive: true);
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final safeName = call.name.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
+    final safeId = call.id.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
+    final fileName = '${stamp}_${safeName}_$safeId.txt';
+    final file = File([dirPath, fileName].join(Platform.pathSeparator));
+    file.writeAsStringSync(content, flush: true);
+    return file.path;
+  } catch (_) {
+    return null;
+  }
+}
 
 typedef StreamRoundRunner =
     Stream<StreamChunk> Function(Stream<StreamChunk> Function() sendRound);
@@ -71,10 +113,9 @@ Stream<StreamChunk> executeClientTools({
   if (emitCalls) {
     yield* emitToolCalls(calls, usage: usage, totalTokens: totalTokens);
   }
-  final executed = <ExecutedClientTool>[];
-  for (final call in calls) {
-    executed.add(await _executeClientTool(call, onToolCall));
-  }
+  final executed = <ExecutedClientTool>[
+    for (final call in calls) await _executeClientTool(call, onToolCall),
+  ];
   yield* emitToolResults(
     [for (final item in executed) _emitExecuted(item)],
     usage: usage,
@@ -102,9 +143,16 @@ Stream<StreamChunk> runClientToolFollowUps({
   StreamRoundRunner? retryRound,
   bool emitCalls = false,
   TokenUsage? Function()? usageOf,
+  int maxRounds = kDefaultMaxToolRounds,
 }) async* {
   var calls = List<EmitToolCall>.from(initialCalls);
+  var rounds = 0;
   while (calls.isNotEmpty) {
+    rounds++;
+    if (rounds > maxRounds) {
+      yield _guardNotice(_roundsExhaustedNotice(maxRounds));
+      break;
+    }
     final usage = usageOf?.call();
     final totalTokens = usage?.totalTokens ?? 0;
     final executed = <ExecutedClientTool>[];
@@ -146,8 +194,16 @@ Stream<StreamChunk> runProviderToolRounds({
   bool executeAfterRound = true,
   StreamRoundRunner? retryRound,
   TokenUsage? Function()? usageOf,
+  int maxRounds = kDefaultMaxToolRounds,
 }) async* {
+  var rounds = 0;
   while (true) {
+    rounds++;
+    if (rounds > maxRounds) {
+      yield _guardNotice(_roundsExhaustedNotice(maxRounds));
+      yield* finish();
+      return;
+    }
     yield* _withRequestUsage(
       retryRound?.call(sendRound) ?? sendRound(),
       usageOf,
@@ -183,9 +239,18 @@ Future<ExecutedClientTool> _executeClientTool(
 ) async {
   final raw = await onToolCall(call.name, call.arguments, toolCallId: call.id);
   final parsed = ClientToolResult.fromHandler(raw);
+  var content = parsed.content;
+  if (content.length > kToolOutputMaxChars) {
+    final spillPath = _spillToolOutput(call, content);
+    content =
+        '${content.substring(0, kToolOutputMaxChars)}\n\n'
+        '[tool output truncated: showing first $kToolOutputMaxChars of '
+        '${content.length} characters'
+        '${spillPath == null ? '' : '; full output saved to $spillPath'}]';
+  }
   return ExecutedClientTool(
     call: call,
-    content: parsed.content,
+    content: content,
     metadata: parsed.metadata,
   );
 }

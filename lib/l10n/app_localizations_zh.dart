@@ -993,6 +993,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditMaxTokensHint => '无限制';
 
   @override
+  String get assistantEditTokenBudgetSoftTitle => 'Token 预算软上限';
+
+  @override
+  String get assistantEditTokenBudgetSoftDescription =>
+      '单次生成累计 Token 达到该值时，注入一次收尾提醒';
+
+  @override
+  String get assistantEditTokenBudgetSoftHint => '关闭';
+
+  @override
+  String get assistantEditTokenBudgetHardTitle => 'Token 预算硬上限';
+
+  @override
+  String get assistantEditTokenBudgetHardDescription =>
+      '单次生成累计 Token 达到该值时自动停止生成';
+
+  @override
+  String get assistantEditTokenBudgetHardHint => '关闭';
+
+  @override
   String get assistantEditChatBackgroundTitle => '聊天背景';
 
   @override
@@ -13196,6 +13216,26 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get assistantEditMaxTokensHint => '无限制';
+
+  @override
+  String get assistantEditTokenBudgetSoftTitle => 'Token 预算软上限';
+
+  @override
+  String get assistantEditTokenBudgetSoftDescription =>
+      '单次生成累计 Token 达到该值时，注入一次收尾提醒';
+
+  @override
+  String get assistantEditTokenBudgetSoftHint => '关闭';
+
+  @override
+  String get assistantEditTokenBudgetHardTitle => 'Token 预算硬上限';
+
+  @override
+  String get assistantEditTokenBudgetHardDescription =>
+      '单次生成累计 Token 达到该值时自动停止生成';
+
+  @override
+  String get assistantEditTokenBudgetHardHint => '关闭';
 
   @override
   String get assistantEditChatBackgroundTitle => '聊天背景';

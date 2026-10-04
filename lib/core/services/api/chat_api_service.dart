@@ -30,6 +30,7 @@ import 'retry_policy.dart';
 import 'tool_call_cancellation.dart';
 import 'stream/retrying_stream.dart';
 import 'stream/stream_chunk_emit.dart';
+import 'stream/stream_chunk_ids.dart';
 
 export 'chat_api_helpers.dart' show ToolCallHandler;
 export 'generation/text_generation_result.dart';
@@ -202,6 +203,59 @@ class ChatApiService {
     );
   }
 
+  /// Token-budget tap (AAA costguards lineage). Usage snapshots replace the
+  /// running round total; `startsRequest` closes the previous round. Soft cap
+  /// injects a one-time wrap-up notice; hard cap emits a notice and cancels
+  /// the session token, which unwinds provider loops through the normal
+  /// user-cancel path.
+  static Stream<StreamChunk> _tapTokenBudget({
+    required int? softCap,
+    required int? hardCap,
+    required CancelToken sessionToken,
+    required Stream<StreamChunk> source,
+  }) async* {
+    if (softCap == null && hardCap == null) {
+      yield* source;
+      return;
+    }
+    var settledRounds = 0;
+    var roundTokens = 0;
+    var softNotified = false;
+    var stopped = false;
+    await for (final chunk in source) {
+      if (chunk is Usage) {
+        if (chunk.startsRequest) {
+          settledRounds += roundTokens;
+          roundTokens = 0;
+        }
+        roundTokens = chunk.usage.totalTokens;
+        final total = settledRounds + roundTokens;
+        if (!stopped && hardCap != null && total >= hardCap) {
+          stopped = true;
+          yield TextDelta(
+            id: StreamChunkIds('generation-guard').text(),
+            text:
+                '\n\n[Generation guard] Token budget hard cap ($hardCap) '
+                'reached; generation stopped.\n',
+          );
+          sessionToken.cancel('token_budget_hard_cap');
+        } else if (!softNotified &&
+            softCap != null &&
+            hardCap == null &&
+            total >= softCap) {
+          softNotified = true;
+          yield TextDelta(
+            id: StreamChunkIds('generation-guard').text(),
+            text:
+                '\n\n[Generation guard] Token budget soft cap ($softCap) '
+                'reached; wrap up soon.\n',
+          );
+        }
+      }
+      yield chunk;
+    }
+  }
+
   static Stream<StreamChunk> sendMessageStream({
     required ProviderConfig config,
     required String modelId,
@@ -226,6 +280,8 @@ class ChatApiService {
     // Disallow media, tools and body overrides for detached text generation.
     bool textOnly = false,
     AutoRetryOptions? retryOverride,
+    int? tokenBudgetSoftCap,
+    int? tokenBudgetHardCap,
   }) async* {
     final sessionToken = CancelToken();
     final toolCancellation = ToolCallCancellation(
@@ -326,34 +382,39 @@ class ChatApiService {
         );
       }
 
-      yield* retryRound(
-        () => _sendOnce(
-          config: config,
-          modelId: modelId,
-          messages: safeMessages,
-          userImagePaths: safeUserImagePaths,
-          reasoning: reasoning,
-          temperature: temperature,
-          topP: topP,
-          maxTokens: maxTokens,
-          tools: textOnly ? null : tools,
-          onToolCall: toolHandler == null
-              ? null
-              : (name, args, {toolCallId}) => toolCancellation.run(
-                  () => toolHandler(name, args, toolCallId: toolCallId),
-                ),
-          extraHeaders: sessionHeaders,
-          extraBody: textOnly ? null : extraBody,
-          conversationId: conversationId,
-          stream: stream,
-          builtInSearchOnly: builtInSearchOnly,
-          skipImageParsing:
-              textOnly || skipImageParsing || !parseMarkdownImageLinks,
-          kind: kind,
-          useOpenAIImagesApi: useOpenAIImagesApi,
-          useZhipuLayoutParsing: useZhipuLayoutParsing,
-          sessionToken: sessionToken,
-          retryRound: retryRound,
+      yield* _tapTokenBudget(
+        softCap: tokenBudgetSoftCap,
+        hardCap: tokenBudgetHardCap,
+        sessionToken: sessionToken,
+        source: retryRound(
+          () => _sendOnce(
+            config: config,
+            modelId: modelId,
+            messages: safeMessages,
+            userImagePaths: safeUserImagePaths,
+            reasoning: reasoning,
+            temperature: temperature,
+            topP: topP,
+            maxTokens: maxTokens,
+            tools: textOnly ? null : tools,
+            onToolCall: toolHandler == null
+                ? null
+                : (name, args, {toolCallId}) => toolCancellation.run(
+                    () => toolHandler(name, args, toolCallId: toolCallId),
+                  ),
+            extraHeaders: sessionHeaders,
+            extraBody: textOnly ? null : extraBody,
+            conversationId: conversationId,
+            stream: stream,
+            builtInSearchOnly: builtInSearchOnly,
+            skipImageParsing:
+                textOnly || skipImageParsing || !parseMarkdownImageLinks,
+            kind: kind,
+            useOpenAIImagesApi: useOpenAIImagesApi,
+            useZhipuLayoutParsing: useZhipuLayoutParsing,
+            sessionToken: sessionToken,
+            retryRound: retryRound,
+          ),
         ),
       );
     } finally {
