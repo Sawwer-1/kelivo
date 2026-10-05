@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../models/memory_entry.dart';
+import '../services/key_vault/key_vault.dart';
 import 'app_database.dart';
 import 'business_data.dart';
+import 'provider_key_sealer.dart';
 
 final class BusinessRepository {
   BusinessRepository(this._database);
@@ -256,6 +258,38 @@ final class BusinessRepository {
     <Object?>[migrationReceiptKey],
   );
 
+  /// One-shot at-rest migration: seals provider credentials still stored in
+  /// plaintext by earlier versions. Idempotent and safe to run on every
+  /// startup; a no-op when the vault is unsupported or nothing is plain.
+  Future<void> sealProviderKeysAtRest() async {
+    if (!KeyVault.instance.isSupported) return;
+    final kind = BusinessEntityKind.provider;
+    final stale = await _database
+        .customSelect(
+          'SELECT ${kind.idColumn} AS entity_id, sort_order, payload '
+          'FROM ${kind.tableName};',
+        )
+        .get();
+    final updates = <BusinessEntityValue>[];
+    for (final row in stale) {
+      final value = BusinessEntityValue(
+        id: row.read<String>('entity_id'),
+        sortOrder: row.read<int>('sort_order'),
+        payload: row.read<String>('payload'),
+      );
+      if (ProviderKeySealer.hasPlainCredentials(value.payload)) {
+        updates.add(ProviderKeySealer.sealRow(kind, value));
+      }
+    }
+    if (updates.isEmpty) return;
+    final updatedAt = DateTime.now().toUtc().microsecondsSinceEpoch;
+    await _database.transaction(() async {
+      for (final row in updates) {
+        await _upsertEntity(kind, row, updatedAt: updatedAt);
+      }
+    });
+  }
+
   Future<List<BusinessEntityValue>> _readEntities(
     BusinessEntityKind kind, {
     String? assistantId,
@@ -278,7 +312,7 @@ final class BusinessRepository {
               : <Variable<Object>>[Variable<String>(assistantId)],
         )
         .get();
-    return List<BusinessEntityValue>.unmodifiable(
+    final entities = List<BusinessEntityValue>.unmodifiable(
       rows.map(
         (row) => BusinessEntityValue(
           id: row.read<String>('entity_id'),
@@ -288,6 +322,9 @@ final class BusinessRepository {
         ),
       ),
     );
+    // Sealed credentials live only below this line: every repository consumer
+    // sees plaintext and compares deterministically.
+    return ProviderKeySealer.unsealRows(kind, entities);
   }
 
   Future<void> _clearEntities(
@@ -313,6 +350,10 @@ final class BusinessRepository {
     BusinessEntityValue row, {
     required int updatedAt,
   }) {
+    // The single write chokepoint for entity rows: credentials are sealed
+    // here so every persistence path (sync, replace, restore, migration)
+    // stores sealed payloads without caring where the row came from.
+    row = ProviderKeySealer.sealRow(kind, row);
     if (kind.extensionKind != null) {
       return _database.customStatement(
         'INSERT INTO extension_entity_rows '

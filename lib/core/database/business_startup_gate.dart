@@ -57,6 +57,19 @@ final class BusinessStartupGate {
     }
     final preferences = BusinessPreferences(repository);
     await preferences.load();
+    // At-rest credential migration for databases written by versions that
+    // stored provider keys in plaintext. Idempotent; never blocks startup.
+    try {
+      await repository.sealProviderKeysAtRest();
+    } catch (error, stackTrace) {
+      developer.log(
+        'Provider key at-rest seal skipped; plaintext keys remain until the '
+        'next startup.',
+        name: 'Kelivo.security.vault',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
     return preferences;
   }
 }
