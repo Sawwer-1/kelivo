@@ -14,10 +14,17 @@ import 'package:window_manager/window_manager.dart';
 /// pet branch is chosen by the `kind: "pet"` marker in the window arguments.
 /// All window plumbing is defensive — a failure on any desktop platform must
 /// degrade to "no pet", never to a broken app.
+///
+/// The pet engine must never touch `window_manager`: the plugin keeps a
+/// process-global native window handle that was bound to the main window at
+/// registration time, and calling ensureInitialized() from a sub engine
+/// re-points it at the pet window. Window styling (size, borderless,
+/// always-on-top, skip-taskbar, bottom-right placement) is applied natively
+/// from the WindowConfiguration at spawn time instead, and dragging/close go
+/// through the forked desktop_multi_window APIs.
 
 const String petEnabledPrefKey = 'pet_enabled_v1';
 const String petWindowArgsPrefKey = 'pet_window_args_v1';
-const String _petKindMarker = '"kind":"pet"';
 
 /// Diagnostic trail for the pet lifecycle. stderr is lost when the app is
 /// launched from Explorer, so failures land in a file under the logs dir.
@@ -36,6 +43,34 @@ void _petLog(String message) {
   } catch (_) {}
 }
 
+/// Returns true when [argumentsJson] is a pet-window payload.
+///
+/// Parsed as JSON (not substring matching) so any serializer formatting —
+/// compact or spaced — is accepted; the substring variant silently broke
+/// restore when the payload was written with `", "`/`": "` separators.
+bool _isPetArgs(String argumentsJson) {
+  try {
+    final decoded = jsonDecode(argumentsJson);
+    return decoded is Map && decoded['kind'] == 'pet';
+  } catch (_) {
+    return false;
+  }
+}
+
+/// The geometry/style applied to every pet window. Kept in one place so
+/// spawn and restore cannot drift apart.
+const WindowConfiguration _petWindowConfigurationBase = WindowConfiguration(
+  arguments: '',
+  hiddenAtLaunch: false,
+  width: 200,
+  height: 236,
+  title: 'Kelivo Pet',
+  borderless: true,
+  alwaysOnTop: true,
+  skipTaskbar: true,
+  alignBottomRight: true,
+);
+
 /// Cross-window command channel: sub-window (pet) invokes, main handles.
 const WindowMethodChannel petMethodChannel = WindowMethodChannel(
   'kelivo/pet',
@@ -44,19 +79,34 @@ const WindowMethodChannel petMethodChannel = WindowMethodChannel(
 
 /// Returns true when this engine is a pet sub-window (and runs its UI);
 /// false on the main engine or when multi-window is unavailable.
+///
+/// Once this engine is identified as a pet it must NEVER return false: a
+/// fall-through would run the whole main-app bootstrap (database, restore
+/// lease, …) a second time in-process, which deadlocks on the business
+/// lease and crashes natively. Any pet-side failure degrades to a minimal
+/// shell app instead.
 Future<bool> branchPetEngine() async {
   if (kIsWeb) return false;
+  WindowController controller;
   try {
-    final controller = await WindowController.fromCurrentEngine();
-    final args = controller.arguments;
-    if (!args.contains(_petKindMarker)) return false;
-    _petLog('pet engine branch: args=$args');
-    await _runPetWindow(controller, args);
-    return true;
-  } catch (error, stackTrace) {
-    _petLog('pet engine branch FAILED: $error\n$stackTrace');
+    controller = await WindowController.fromCurrentEngine();
+  } catch (_) {
+    // Multi-window unavailable or main engine without a definition: the
+    // main app path must run.
     return false;
   }
+  if (!_isPetArgs(controller.arguments)) return false;
+
+  _petLog('pet engine branch: args=${controller.arguments}');
+  try {
+    await _runPetWindow(controller, controller.arguments);
+  } catch (error, stackTrace) {
+    _petLog('pet engine branch FAILED: $error\n$stackTrace');
+    try {
+      runApp(const _PetFallbackApp());
+    } catch (_) {}
+  }
+  return true;
 }
 
 Future<void> _runPetWindow(
@@ -75,50 +125,36 @@ Future<void> _runPetWindow(
   final name = (args['assistantName'] ?? '').toString();
   final avatar = args['avatar']?.toString();
 
-  await windowManager.ensureInitialized();
   try {
-    await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
-    await windowManager.waitUntilReadyToShow(
-      const WindowOptions(
-        size: Size(200, 236),
-        minimumSize: Size(200, 236),
-        maximumSize: Size(200, 236),
-        alwaysOnTop: true,
-        skipTaskbar: true,
-        title: 'Kelivo Pet',
-        titleBarStyle: TitleBarStyle.hidden,
-      ),
-      () async {
-        await windowManager.setAlignment(Alignment.bottomRight);
-        await windowManager.show();
-      },
-    );
-  } catch (_) {
-    // Geometry best-effort; the card still renders windowed.
-  }
-
-  try {
-    final self = await WindowController.fromCurrentEngine();
-    await self.setWindowMethodHandler((call) async {
+    await controller.setWindowMethodHandler((call) async {
       if (call.method == 'pet.destroy') {
-        await windowManager.destroy();
+        try {
+          await controller.close();
+        } catch (_) {}
       }
       return null;
     });
   } catch (_) {}
 
   runApp(
-    _PetApp(assistantId: assistantId, assistantName: name, avatar: avatar),
+    _PetApp(
+      controller: controller,
+      assistantId: assistantId,
+      assistantName: name,
+      avatar: avatar,
+    ),
   );
 }
 
 class _PetApp extends StatelessWidget {
   const _PetApp({
+    required this.controller,
     required this.assistantId,
     required this.assistantName,
     this.avatar,
   });
 
+  final WindowController controller;
   final String assistantId;
   final String assistantName;
   final String? avatar;
@@ -129,6 +165,7 @@ class _PetApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true),
       home: _PetCard(
+        controller: controller,
         assistantId: assistantId,
         assistantName: assistantName,
         avatar: avatar,
@@ -137,13 +174,33 @@ class _PetApp extends StatelessWidget {
   }
 }
 
+/// Minimal shell shown if the pet UI fails to bootstrap, so a pet engine
+/// never falls through to the main app path.
+class _PetFallbackApp extends StatelessWidget {
+  const _PetFallbackApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(useMaterial3: true),
+      home: const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: Icon(Icons.smart_toy_outlined, size: 44)),
+      ),
+    );
+  }
+}
+
 class _PetCard extends StatefulWidget {
   const _PetCard({
+    required this.controller,
     required this.assistantId,
     required this.assistantName,
     this.avatar,
   });
 
+  final WindowController controller;
   final String assistantId;
   final String assistantName;
   final String? avatar;
@@ -171,7 +228,7 @@ class _PetCardState extends State<_PetCard> {
       // Main window gone: nothing to close into; die silently.
     }
     try {
-      await windowManager.destroy();
+      await widget.controller.close();
     } catch (_) {}
   }
 
@@ -181,7 +238,9 @@ class _PetCardState extends State<_PetCard> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: GestureDetector(
-        onPanStart: (_) => windowManager.startDragging(),
+        onPanStart: (_) {
+          widget.controller.startDragging().catchError((_) {});
+        },
         child: Container(
           margin: const EdgeInsets.all(6),
           decoration: BoxDecoration(
@@ -395,7 +454,7 @@ final class PetWindowManager {
     await close(closePref: false);
     try {
       _controller = await WindowController.create(
-        WindowConfiguration(arguments: args, hiddenAtLaunch: false),
+        _petWindowConfigurationBase.copyWithArguments(args),
       );
       _petLog('spawn: created ${_controller?.windowId}');
     } catch (error, stackTrace) {
@@ -410,10 +469,6 @@ final class PetWindowManager {
 
   /// Closes the pet window. [closePref] clears the restore intent; the ✕
   /// inside the pet window must clear it, while a respawn keeps it.
-  ///
-  /// desktop_multi_window 0.3.1 exposes only window_show/window_hide
-  /// natively, so destruction goes through the pet engine itself via its
-  /// window method handler.
   Future<void> close({bool closePref = true}) async {
     final controller = _controller;
     _controller = null;
@@ -426,7 +481,7 @@ final class PetWindowManager {
       // windows by their arguments and ask each to destroy itself.
       try {
         for (final window in await WindowController.getAll()) {
-          if (window.arguments.contains(_petKindMarker)) {
+          if (_isPetArgs(window.arguments)) {
             await window.invokeMethod<dynamic>('pet.destroy');
           }
         }
@@ -449,7 +504,7 @@ final class PetWindowManager {
         return;
       }
       final args = prefs.getString(petWindowArgsPrefKey);
-      if (args == null || !args.contains(_petKindMarker)) {
+      if (args == null || !_isPetArgs(args)) {
         _petLog('restore: no args, skip');
         return;
       }
@@ -461,7 +516,7 @@ final class PetWindowManager {
         _petLog('restore: stale close failed: $error');
       }
       _controller = await WindowController.create(
-        WindowConfiguration(arguments: args, hiddenAtLaunch: false),
+        _petWindowConfigurationBase.copyWithArguments(args),
       );
       _petLog('restore: created ${_controller?.windowId}');
     } catch (error, stackTrace) {

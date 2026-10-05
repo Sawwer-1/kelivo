@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
   bitsdojo_window_windows
   desktop_drop
+  desktop_multi_window
   dynamic_color
   file_selector_windows
   hotkey_manager_windows

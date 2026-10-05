@@ -35,7 +35,8 @@ dependencies:
   # BitsDojo Window for Windows
   bitsdojo_window: ^0.1.6
   window_manager: ^0.5.1
-  desktop_multi_window: ^0.3.1
+  desktop_multi_window:
+    path: ./dependencies/desktop_multi_window
   screen_retriever: ^0.2.0
   tray_manager:
     path: ./dependencies/tray_manager/packages/tray_manager

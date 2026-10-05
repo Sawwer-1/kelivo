@@ -6,6 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   bitsdojo_window_linux
   desktop_drop
+  desktop_multi_window
   dynamic_color
   file_selector_linux
   hotkey_manager_linux
