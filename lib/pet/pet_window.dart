@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -80,26 +81,65 @@ const WindowMethodChannel petMethodChannel = WindowMethodChannel(
 /// Returns true when this engine is a pet sub-window (and runs its UI);
 /// false on the main engine or when multi-window is unavailable.
 ///
+/// Engine identity is taken from the dart entrypoint arguments the
+/// desktop_multi_window runner sets for every sub-window engine
+/// (["multi_window", windowId, windowArgument]); on Windows the main engine
+/// either gets no entrypoint args or only the raw command line. This is a
+/// structural guarantee: it never depends on a method channel answering
+/// before the sub-engine's internal plugin registration — the previous
+/// fromCurrentEngine()-based check silently failed under message-pump
+/// reentry during window creation, which made the pet engine fall through
+/// into the main-app bootstrap (lease deadlock + native crash).
+///
 /// Once this engine is identified as a pet it must NEVER return false: a
 /// fall-through would run the whole main-app bootstrap (database, restore
 /// lease, …) a second time in-process, which deadlocks on the business
 /// lease and crashes natively. Any pet-side failure degrades to a minimal
 /// shell app instead.
-Future<bool> branchPetEngine() async {
+Future<bool> branchPetEngine([List<String> entrypointArgs = const []]) async {
   if (kIsWeb) return false;
-  WindowController controller;
-  try {
-    controller = await WindowController.fromCurrentEngine();
-  } catch (_) {
-    // Multi-window unavailable or main engine without a definition: the
-    // main app path must run.
+  final isWindows = defaultTargetPlatform == TargetPlatform.windows;
+  final isWindowsSubEngine =
+      entrypointArgs.length >= 3 && entrypointArgs.first == 'multi_window';
+  if (isWindows) {
+    // Windows: the entrypoint args are the iron-clad identity proof.
+    if (!isWindowsSubEngine) return false; // main engine, run the app
+  } else {
+    // macOS/Linux runners set no entrypoint args for sub-windows; fall back
+    // to the method-channel based identification there.
+    try {
+      final viaChannel = await WindowController.fromCurrentEngine();
+      if (!_isPetArgs(viaChannel.arguments)) return false;
+      return await _runPetBranch(viaChannel, viaChannel.arguments);
+    } catch (error) {
+      _petLog('fromCurrentEngine FAILED: $error');
+      // Multi-window unavailable or main engine without a definition: the
+      // main app path must run.
+      return false;
+    }
+  }
+
+  final windowId = entrypointArgs[1];
+  final argumentsJson = entrypointArgs.length >= 3 ? entrypointArgs[2] : '';
+  _petLog('pet engine branch: windowId=$windowId args=$argumentsJson');
+  if (!_isPetArgs(argumentsJson)) {
+    _petLog('pet engine branch: non-pet sub-window, fall through');
     return false;
   }
-  if (!_isPetArgs(controller.arguments)) return false;
+  final controller = WindowController.fromEntryPointArgs(
+    windowId,
+    argumentsJson,
+  );
+  return _runPetBranch(controller, argumentsJson);
+}
 
-  _petLog('pet engine branch: args=${controller.arguments}');
+/// Runs the pet UI for [controller]; never returns false once called.
+Future<bool> _runPetBranch(
+  WindowController controller,
+  String argumentsJson,
+) async {
   try {
-    await _runPetWindow(controller, controller.arguments);
+    await _runPetWindow(controller, argumentsJson);
   } catch (error, stackTrace) {
     _petLog('pet engine branch FAILED: $error\n$stackTrace');
     try {

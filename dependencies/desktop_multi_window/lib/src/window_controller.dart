@@ -33,6 +33,16 @@ class WindowController {
   factory WindowController.fromWindowId(String id) =>
       WindowController._(id, '');
 
+  /// Builds the controller for a sub-window engine from the dart entrypoint
+  /// arguments the desktop_multi_window runner sets for it
+  /// (["multi_window", windowId, windowArgument]).
+  ///
+  /// Unlike [fromCurrentEngine] this never touches a method channel, so it
+  /// works even before the sub-engine's internal plugin registration could
+  /// answer (or if a message-pump reentry let main() run too early).
+  factory WindowController.fromEntryPointArgs(String id, String arguments) =>
+      WindowController._(id, arguments);
+
   static Future<WindowController> create(
       WindowConfiguration configuration) async {
     final windowId = await _channel.invokeMethod<String>(

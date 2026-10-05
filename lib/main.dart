@@ -150,20 +150,25 @@ void _wireWorkspaceServices(BuildContext ctx) {
   } catch (_) {}
 }
 
-Future<void> main() async {
+Future<void> main([List<String> args = const []]) async {
   await runZoned(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       WindowsPasteFix.instance.install();
       // 桌宠: desktop_multi_window re-enters main() for sub-window engines;
       // a pet engine runs its own UI and never reaches the app below.
+      // Sub-window engines receive dart entrypoint arguments
+      // ["multi_window", windowId, windowArgument] — pass them through so
+      // the branch can identify the engine without a method channel.
       if (!kIsWeb &&
           (defaultTargetPlatform == TargetPlatform.windows ||
               defaultTargetPlatform == TargetPlatform.macOS ||
               defaultTargetPlatform == TargetPlatform.linux)) {
         try {
-          if (await branchPetEngine()) return;
-        } catch (_) {}
+          if (await branchPetEngine(args)) return;
+        } catch (error, stackTrace) {
+          stderr.writeln('[pet] branchPetEngine threw: $error\n$stackTrace');
+        }
       }
       // Register notification tap handling for every Android launch. This is
       // independent of the current background-chat mode: an older completion
