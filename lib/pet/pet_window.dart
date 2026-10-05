@@ -19,6 +19,23 @@ const String petEnabledPrefKey = 'pet_enabled_v1';
 const String petWindowArgsPrefKey = 'pet_window_args_v1';
 const String _petKindMarker = '"kind":"pet"';
 
+/// Diagnostic trail for the pet lifecycle. stderr is lost when the app is
+/// launched from Explorer, so failures land in a file under the logs dir.
+void _petLog(String message) {
+  try {
+    final base = Platform.environment['APPDATA'];
+    if (base == null) return;
+    final dir = Directory([base, 'com.psyche', 'kelivo', 'logs']
+        .join(Platform.pathSeparator));
+    dir.createSync(recursive: true);
+    File([dir.path, 'pet_diag.log'].join(Platform.pathSeparator))
+        .writeAsStringSync(
+      '${DateTime.now().toIso8601String()} $message\n',
+      mode: FileMode.append,
+    );
+  } catch (_) {}
+}
+
 /// Cross-window command channel: sub-window (pet) invokes, main handles.
 const WindowMethodChannel petMethodChannel = WindowMethodChannel(
   'kelivo/pet',
@@ -33,9 +50,11 @@ Future<bool> branchPetEngine() async {
     final controller = await WindowController.fromCurrentEngine();
     final args = controller.arguments;
     if (!args.contains(_petKindMarker)) return false;
+    _petLog('pet engine branch: args=$args');
     await _runPetWindow(controller, args);
     return true;
-  } catch (_) {
+  } catch (error, stackTrace) {
+    _petLog('pet engine branch FAILED: $error\n$stackTrace');
     return false;
   }
 }
@@ -378,7 +397,9 @@ final class PetWindowManager {
       _controller = await WindowController.create(
         WindowConfiguration(arguments: args, hiddenAtLaunch: false),
       );
-    } catch (_) {
+      _petLog('spawn: created ${_controller?.windowId}');
+    } catch (error, stackTrace) {
+      _petLog('spawn FAILED: $error\n$stackTrace');
       _controller = null;
       return;
     }
@@ -420,17 +441,31 @@ final class PetWindowManager {
 
   /// Restores the pet on app start when the user left it enabled.
   Future<void> restoreIfEnabled() async {
+    _petLog('restore: enter');
     try {
       final prefs = await SharedPreferences.getInstance();
-      if (!(prefs.getBool(petEnabledPrefKey) ?? false)) return;
+      if (!(prefs.getBool(petEnabledPrefKey) ?? false)) {
+        _petLog('restore: disabled, skip');
+        return;
+      }
       final args = prefs.getString(petWindowArgsPrefKey);
-      if (args == null || !args.contains(_petKindMarker)) return;
+      if (args == null || !args.contains(_petKindMarker)) {
+        _petLog('restore: no args, skip');
+        return;
+      }
       await ensureMainHandler();
-      await close(closePref: false);
+      // Closing stale windows must never block the respawn.
+      try {
+        await close(closePref: false);
+      } catch (error) {
+        _petLog('restore: stale close failed: $error');
+      }
       _controller = await WindowController.create(
         WindowConfiguration(arguments: args, hiddenAtLaunch: false),
       );
-    } catch (_) {
+      _petLog('restore: created ${_controller?.windowId}');
+    } catch (error, stackTrace) {
+      _petLog('restore: FAILED: $error\n$stackTrace');
       _controller = null;
     }
   }

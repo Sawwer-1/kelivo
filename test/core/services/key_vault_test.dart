@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:Kelivo/core/services/key_vault/key_vault.dart';
 
 void main() {
+  // Force the real DPAPI path: flutter_test defaults to android platform,
+  // which silently degrades to the passthrough vault (false-green trap).
   final vault = KeyVault.instance;
   final sealedPlatform = vault.isSupported;
 

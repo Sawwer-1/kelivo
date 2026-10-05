@@ -101,6 +101,11 @@ final class DpapiKeyVault implements KeyVault {
   final DynamicLibrary _crypt32 = DynamicLibrary.open('crypt32.dll');
   final DynamicLibrary _kernel32 = DynamicLibrary.open('kernel32.dll');
 
+  /// One-off acceptance diagnostics: last Win32 error after a failed call.
+  late final int Function() _getLastError = _kernel32
+      .lookup<NativeFunction<Uint32 Function()>>('GetLastError')
+      .asFunction();
+
   late final int Function(
     Pointer<_DataBlob>,
     Pointer<ffi.Utf16>,
@@ -164,7 +169,10 @@ final class DpapiKeyVault implements KeyVault {
         _uiForbidden,
         outBlob,
       );
-      if (ok == 0) throw StateError('CryptProtectData failed');
+      if (ok == 0) {
+        throw StateError('CryptProtectData failed (GetLastError='
+            '${_getLastError()})');
+      }
       final out = outBlob.ref;
       final bytes = Uint8List.fromList(out.pbData.asTypedList(out.cbData));
       _localFree(out.pbData.cast<Void>());
@@ -195,9 +203,13 @@ final class DpapiKeyVault implements KeyVault {
     Uint8List bytes,
     R Function(Pointer<_DataBlob>, Pointer<_DataBlob>) body,
   ) {
-    final inBlob = ffi.malloc<_DataBlob>();
-    final dataBuf = ffi.malloc<Uint8>(bytes.isEmpty ? 1 : bytes.length);
-    final outBlob = ffi.malloc<_DataBlob>();
+    // Allocator.call<T>(x) treats x as ALIGNMENT and allocates sizeof(T) —
+    // allocate<T>(n) is the explicit byte-count form. DATA_BLOB is 16 bytes
+    // on x64; the data buffer needs exactly len.
+    final inBlob = ffi.malloc.allocate<_DataBlob>(16);
+    final dataBuf =
+        ffi.malloc.allocate<Uint8>(bytes.isEmpty ? 1 : bytes.length);
+    final outBlob = ffi.malloc.allocate<_DataBlob>(16);
     try {
       dataBuf.asTypedList(bytes.length).setAll(0, bytes);
       inBlob.ref
@@ -212,10 +224,11 @@ final class DpapiKeyVault implements KeyVault {
   }
 }
 
-/// mirrors crypt32's DATA_BLOB: { BYTE* pbData; DWORD cbData; }
+/// mirrors crypt32's DATA_BLOB / CRYPTOAPI_BLOB: { DWORD cbData; BYTE* pbData; }
+/// (field order matters: cbData comes FIRST, unlike the MSDN prose order)
 final class _DataBlob extends Struct {
-  external Pointer<Uint8> pbData;
-
   @Uint32()
   external int cbData;
+
+  external Pointer<Uint8> pbData;
 }
