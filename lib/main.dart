@@ -14,6 +14,7 @@ import 'features/migration/hive_to_sqlite_migration_service.dart';
 import 'desktop/desktop_home_page.dart';
 import 'package:flutter/services.dart';
 import 'package:window_manager/window_manager.dart';
+import 'pet/pet_window.dart';
 import 'desktop/desktop_window_controller.dart';
 import 'core/services/linux_window_service.dart';
 import 'desktop/desktop_tray_controller.dart';
@@ -154,6 +155,16 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       WindowsPasteFix.instance.install();
+      // 桌宠: desktop_multi_window re-enters main() for sub-window engines;
+      // a pet engine runs its own UI and never reaches the app below.
+      if (!kIsWeb &&
+          (defaultTargetPlatform == TargetPlatform.windows ||
+              defaultTargetPlatform == TargetPlatform.macOS ||
+              defaultTargetPlatform == TargetPlatform.linux)) {
+        try {
+          if (await branchPetEngine()) return;
+        } catch (_) {}
+      }
       // Register notification tap handling for every Android launch. This is
       // independent of the current background-chat mode: an older completion
       // notification can still launch the app after the mode has changed.
@@ -568,6 +579,15 @@ Future<void> _initDesktopWindow() async {
       } catch (_) {}
     }
     // Ignore on unsupported platforms.
+  } finally {
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.linux)) {
+      try {
+        await PetWindowManager.instance.restoreIfEnabled();
+      } catch (_) {}
+    }
   }
 }
 

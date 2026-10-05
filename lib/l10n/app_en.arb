@@ -2316,6 +2316,8 @@
   "displaySettingsPageSendShortcutTitle": "Send Shortcut",
   "displaySettingsPageSendShortcutEnter": "Enter",
   "displaySettingsPageSendShortcutCtrlEnter": "Ctrl/Cmd + Enter",
+  "displaySettingsPageDesktopPetTitle": "Desktop Pet",
+  "displaySettingsPageDesktopPetSubtitle": "Show a compact always-on-top assistant window; click it to open Kelivo",
   "displaySettingsPageAutoSwitchTopicsTitle": "Auto switch to Topics",
   "desktopDisplaySettingsTopicPositionTitle": "Topic position",
   "desktopDisplaySettingsTopicPositionLeft": "Left",

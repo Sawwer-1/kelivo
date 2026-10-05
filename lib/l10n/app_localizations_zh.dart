@@ -5124,6 +5124,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get displaySettingsPageSendShortcutCtrlEnter => 'Ctrl/Cmd + Enter';
 
   @override
+  String get displaySettingsPageDesktopPetTitle => '桌宠';
+
+  @override
+  String get displaySettingsPageDesktopPetSubtitle =>
+      '在桌面常驻一个置顶小窗，点按即可打开 Kelivo';
+
+  @override
   String get displaySettingsPageAutoSwitchTopicsTitle => '自动切换话题';
 
   @override
@@ -17354,6 +17361,13 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get displaySettingsPageSendShortcutCtrlEnter => 'Ctrl/Cmd + Enter';
+
+  @override
+  String get displaySettingsPageDesktopPetTitle => '桌宠';
+
+  @override
+  String get displaySettingsPageDesktopPetSubtitle =>
+      '在桌面常驻一个置顶小窗，点按即可打开 Kelivo';
 
   @override
   String get displaySettingsPageAutoSwitchTopicsTitle => '自动切换话题';

@@ -122,6 +122,8 @@ class _DisplaySettingsBody extends StatelessWidget {
                 children: const [
                   _ToggleRowAutoSwitchTopicsDesktop(),
                   _RowDivider(),
+                  _ToggleRowDesktopPet(),
+                  _RowDivider(),
                   _ToggleRowAutoCollapseThinking(),
                   _RowDivider(),
                   _ToggleRowCollapseThinkingSteps(),
@@ -2937,6 +2939,61 @@ class _ToggleRowAutoSwitchTopicsDesktop extends StatelessWidget {
       value: sp.desktopAutoSwitchTopics,
       onChanged: (v) =>
           context.read<SettingsProvider>().setDesktopAutoSwitchTopics(v),
+    );
+  }
+}
+
+class _ToggleRowDesktopPet extends StatefulWidget {
+  const _ToggleRowDesktopPet();
+
+  @override
+  State<_ToggleRowDesktopPet> createState() => _ToggleRowDesktopPetState();
+}
+
+class _ToggleRowDesktopPetState extends State<_ToggleRowDesktopPet> {
+  bool _enabled = false;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    PetWindowManager.isEnabled().then((v) {
+      if (!mounted) return;
+      setState(() {
+        _enabled = v;
+        _loaded = true;
+      });
+    });
+  }
+
+  Future<void> _onChanged(bool v) async {
+    if (v) {
+      final ap = context.read<AssistantProvider>();
+      final a = ap.currentAssistant;
+      if (a == null) {
+        return;
+      }
+      await PetWindowManager.instance.spawn(
+        assistantId: a.id,
+        assistantName: a.name,
+        avatar: a.avatar,
+      );
+    } else {
+      await PetWindowManager.instance.close();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _enabled = prefs.getBool(petEnabledPrefKey) ?? v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return _ToggleRow(
+      label: l10n.displaySettingsPageDesktopPetTitle,
+      tip: l10n.displaySettingsPageDesktopPetSubtitle,
+      value: _loaded && _enabled,
+      onChanged: _onChanged,
     );
   }
 }
