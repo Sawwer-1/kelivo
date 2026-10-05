@@ -1,4 +1,5 @@
 import '../../../core/services/auth/provider_oauth_service.dart';
+import '../../../core/services/tool_audit/tool_call_audit.dart';
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/widgets.dart';
@@ -2160,9 +2161,21 @@ class ChatActions {
               tokens: state.totalTokens,
               toolName: name,
             );
+            final auditStopwatch = Stopwatch()..start();
+            Object? auditResult;
             try {
-              return await toolHandler(name, args, toolCallId: toolCallId);
+              auditResult = await toolHandler(name, args, toolCallId: toolCallId);
+              return auditResult;
             } finally {
+              auditStopwatch.stop();
+              ToolCallAudit.record(
+                tool: name,
+                arguments: args,
+                toolCallId: toolCallId,
+                conversationId: conversationId,
+                elapsedMs: auditStopwatch.elapsedMilliseconds,
+                status: ToolCallAudit.statusOf(auditResult),
+              );
               _scheduleBackgroundGenerationUpdate(state);
             }
           };
