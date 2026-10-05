@@ -181,6 +181,8 @@ class _DisplaySettingsBody extends StatelessWidget {
                   _ToggleRowRequestLogging(),
                   _RowDivider(),
                   _ToggleRowFlutterLogging(),
+                  _RowDivider(),
+                  _ToggleRowToolAudit(),
                 ],
               ),
             ],
@@ -2943,9 +2945,24 @@ class _ToggleRowAutoSwitchTopicsDesktop extends StatelessWidget {
   }
 }
 
+class _ToggleRowToolAudit extends StatelessWidget {
+  const _ToggleRowToolAudit();
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sp = context.watch<SettingsProvider>();
+    return _ToggleRow(
+      label: l10n.toolAuditSettingTitle,
+      tip: l10n.toolAuditSettingSubtitle,
+      value: sp.toolAuditEnabled,
+      onChanged: (v) =>
+          context.read<SettingsProvider>().setToolAuditEnabled(v),
+    );
+  }
+}
+
 class _ToggleRowDesktopPet extends StatefulWidget {
   const _ToggleRowDesktopPet();
-
   @override
   State<_ToggleRowDesktopPet> createState() => _ToggleRowDesktopPetState();
 }

@@ -7117,6 +7117,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled, Flutter errors and print output are written to logs/flutter_logs.txt (rotated daily).';
 
   @override
+  String get toolAuditSettingTitle => 'Tool Call Audit';
+
+  @override
+  String get toolAuditSettingSubtitle =>
+      'When enabled, every client tool call (name, status, duration, truncated arguments) is appended to tool_audit/audit-YYYYMMDD.jsonl.';
+
+  @override
   String get contextLogSettingTitle => 'Context Logging';
 
   @override

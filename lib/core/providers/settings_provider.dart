@@ -18,6 +18,7 @@ import '../services/asr/asr_service_options.dart';
 import '../services/network/request_logger.dart';
 import '../services/logging/context_logger.dart';
 import '../services/logging/flutter_logger.dart';
+import '../services/tool_audit/tool_call_audit.dart';
 import '../services/learning_mode_store.dart';
 import '../models/api_keys.dart';
 import '../models/backup.dart';
@@ -344,6 +345,8 @@ class SettingsProvider extends ChangeNotifier {
   static const String _contextLogEnabledKey = 'context_log_enabled_v1';
   // Flutter runtime logging (debug)
   static const String _flutterLogEnabledKey = 'flutter_log_enabled_v1';
+  // Tool call audit trail (AAA): writes tool_audit/audit-YYYYMMDD.jsonl
+  static const String _toolAuditEnabledKey = 'tool_audit_enabled_v1';
   // Log settings: save response output, auto-delete, max size
   static const String _logSaveOutputKey = 'log_save_output_v1';
   static const String _logElideLargePayloadsKey = 'log_elide_large_payloads_v1';
@@ -1047,6 +1050,8 @@ class SettingsProvider extends ChangeNotifier {
     _flutterLogEnabled =
         localPreferences.getBool(_flutterLogEnabledKey) ?? false;
     await FlutterLogger.setEnabled(_flutterLogEnabled);
+    _toolAuditEnabled = localPreferences.getBool(_toolAuditEnabledKey) ?? true;
+    ToolCallAudit.enabled = _toolAuditEnabled;
     _logSaveOutput = prefs.getBool(_logSaveOutputKey) ?? false;
     RequestLogger.saveOutput = _logSaveOutput;
     _logElideLargePayloads = prefs.getBool(_logElideLargePayloadsKey) ?? true;
@@ -5497,6 +5502,18 @@ Requirements:
     await FlutterLogger.setEnabled(v);
   }
 
+  // Tool call audit trail (AAA)
+  bool _toolAuditEnabled = true;
+  bool get toolAuditEnabled => _toolAuditEnabled;
+  Future<void> setToolAuditEnabled(bool v) async {
+    if (_toolAuditEnabled == v) return;
+    _toolAuditEnabled = v;
+    notifyListeners();
+    ToolCallAudit.enabled = v;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_toolAuditEnabledKey, v);
+  }
+
   Future<void> incrementAppLaunchCount() async {
     final prefs = _preferences;
     final next = (prefs.getInt(_appLaunchCountKey) ?? _appLaunchCount) + 1;
@@ -5768,6 +5785,7 @@ Requirements:
     copy._requestLogEnabled = _requestLogEnabled;
     copy._contextLogEnabled = _contextLogEnabled;
     copy._flutterLogEnabled = _flutterLogEnabled;
+    copy._toolAuditEnabled = _toolAuditEnabled;
     copy._logSaveOutput = _logSaveOutput;
     copy._logElideLargePayloads = _logElideLargePayloads;
     copy._logAutoDeleteDays = _logAutoDeleteDays;

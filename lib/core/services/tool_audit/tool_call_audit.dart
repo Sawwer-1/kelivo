@@ -15,6 +15,11 @@ final class ToolCallAudit {
 
   static const maxFileBytes = 8 * 1024 * 1024;
 
+  /// User-facing switch (SettingsProvider mirrors the persisted pref into
+  /// this field). Defaults to on: the trail is an opt-out, not opt-in —
+  /// a missing audit after a incident is worse than a small local file.
+  static bool enabled = true;
+
   /// Test seam: override the audit directory (null = platform default).
   @visibleForTesting
   static Directory? Function() directoryResolverOverride = () => null;
@@ -33,6 +38,7 @@ final class ToolCallAudit {
     required String status,
     String? error,
   }) {
+    if (!enabled) return;
     final entry = jsonEncode({
       'ts': DateTime.now().toUtc().toIso8601String(),
       'tool': tool,

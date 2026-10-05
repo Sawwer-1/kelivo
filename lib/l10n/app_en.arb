@@ -2995,6 +2995,8 @@
   "requestLogSettingSubtitle": "When enabled, request/response details are written to logs/logs.txt (rotated daily).",
   "flutterLogSettingTitle": "Flutter Logging",
   "flutterLogSettingSubtitle": "When enabled, Flutter errors and print output are written to logs/flutter_logs.txt (rotated daily).",
+  "toolAuditSettingTitle": "Tool Call Audit",
+  "toolAuditSettingSubtitle": "When enabled, every client tool call (name, status, duration, truncated arguments) is appended to tool_audit/audit-YYYYMMDD.jsonl.",
   "contextLogSettingTitle": "Context Logging",
   "contextLogSettingSubtitle": "When enabled, the exact messages sent to the model are written to logs/context_logs.txt (rotated daily).",
   "contextLogViewerTitle": "Context",

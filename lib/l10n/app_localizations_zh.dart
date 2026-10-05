@@ -6834,6 +6834,13 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启后会将 Flutter 错误与 print 输出写入 logs/flutter_logs.txt';
 
   @override
+  String get toolAuditSettingTitle => '工具调用审计';
+
+  @override
+  String get toolAuditSettingSubtitle =>
+      '开启后每次工具调用（名称、状态、耗时、截断后的参数）会追加写入 tool_audit/audit-日期.jsonl';
+
+  @override
   String get contextLogSettingTitle => '上下文日志';
 
   @override
@@ -18997,6 +19004,13 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   @override
   String get flutterLogSettingSubtitle =>
       '开启后会将 Flutter 错误与 print 输出写入 logs/flutter_logs.txt';
+
+  @override
+  String get toolAuditSettingTitle => '工具调用审计';
+
+  @override
+  String get toolAuditSettingSubtitle =>
+      '开启后每次工具调用（名称、状态、耗时、截断后的参数）会追加写入 tool_audit/audit-日期.jsonl';
 
   @override
   String get contextLogSettingTitle => '上下文日志';
@@ -31210,6 +31224,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get flutterLogSettingSubtitle =>
       '開啟後會將 Flutter 錯誤與 print 輸出寫入 logs/flutter_logs.txt';
+
+  @override
+  String get toolAuditSettingTitle => '工具調用審計';
+
+  @override
+  String get toolAuditSettingSubtitle =>
+      '開啟後每次工具調用（名稱、狀態、耗時、截斷後的參數）會追加寫入 tool_audit/audit-日期.jsonl';
 
   @override
   String get contextLogSettingTitle => '上下文日誌';

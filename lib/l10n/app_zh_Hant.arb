@@ -2485,6 +2485,8 @@
   "requestLogSettingSubtitle": "開啟後會將請求/回應詳細寫入 logs/logs.txt",
   "flutterLogSettingTitle": "Flutter日誌列印",
   "flutterLogSettingSubtitle": "開啟後會將 Flutter 錯誤與 print 輸出寫入 logs/flutter_logs.txt",
+  "toolAuditSettingTitle": "工具調用審計",
+  "toolAuditSettingSubtitle": "開啟後每次工具調用（名稱、狀態、耗時、截斷後的參數）會追加寫入 tool_audit/audit-日期.jsonl",
   "contextLogSettingTitle": "上下文日誌",
   "contextLogSettingSubtitle": "開啟後會將每次實際傳送給模型的完整上下文寫入 logs/context_logs.txt",
   "contextLogViewerTitle": "上下文",

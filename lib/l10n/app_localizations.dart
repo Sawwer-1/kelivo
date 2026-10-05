@@ -12979,6 +12979,18 @@ abstract class AppLocalizations {
   /// **'When enabled, Flutter errors and print output are written to logs/flutter_logs.txt (rotated daily).'**
   String get flutterLogSettingSubtitle;
 
+  /// No description provided for @toolAuditSettingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool Call Audit'**
+  String get toolAuditSettingTitle;
+
+  /// No description provided for @toolAuditSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, every client tool call (name, status, duration, truncated arguments) is appended to tool_audit/audit-YYYYMMDD.jsonl.'**
+  String get toolAuditSettingSubtitle;
+
   /// No description provided for @contextLogSettingTitle.
   ///
   /// In en, this message translates to:
