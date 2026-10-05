@@ -21,6 +21,11 @@ bool FlutterWindow::OnCreate() {
   // Avoid Windows fullscreen freezes in recent Flutter engines when
   // window_manager changes styles from a platform-channel call.
   project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);
+  // Multi-engine + Impeller on the GL backend crashes (c0000005 inside
+  // flutter_windows.dll within seconds) when a second engine runs; the
+  // classic GL renderer is stable for sub-window engines. The main engine
+  // keeps its default Impeller behavior.
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
   std::vector<std::string> entrypoint_args = {"multi_window", id_,
                                               window_argument_};
   project.set_dart_entrypoint_arguments(entrypoint_args);
