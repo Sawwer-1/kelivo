@@ -1969,17 +1969,13 @@ class ChatDatabaseRepository {
   });
 
   Future<Conversation?> getConversation(String id) async {
-    return _observer.measure(
-      ChatDatabaseOperation.queryConversation,
-      () async {
-        final row = await (_db.select(
-          _db.conversationRows,
-        )..where((t) => t.id.equals(id))).getSingleOrNull();
-        if (row == null) return null;
-        return _conversationFromRow(row);
-      },
-      resultCount: (conversation) => conversation == null ? 0 : 1,
-    );
+    return _observer.measure(ChatDatabaseOperation.queryConversation, () async {
+      final row = await (_db.select(
+        _db.conversationRows,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (row == null) return null;
+      return _conversationFromRow(row);
+    }, resultCount: (conversation) => conversation == null ? 0 : 1);
   }
 
   Future<int> getMessageCount(String conversationId) async {
@@ -7461,10 +7457,18 @@ class ChatDatabaseRepository {
 
   /// Read one consistent set of inputs for prompt injection and usage caching.
   Future<({List<UserProfileField> profile, List<MemoryEntry> memories})>
-  readMemorySnapshotData({required String assistantId}) => _db.transaction(
+  readMemorySnapshotData({
+    required String assistantId,
+    String? conversationId,
+    bool excludeConversationBound = false,
+  }) => _db.transaction(
     () async => (
       profile: await readProfileFields(),
-      memories: await queryVisibleMemories(assistantId: assistantId),
+      memories: await queryVisibleMemories(
+        assistantId: assistantId,
+        conversationId: conversationId,
+        excludeConversationBound: excludeConversationBound,
+      ),
     ),
   );
 
@@ -7478,11 +7482,24 @@ class ChatDatabaseRepository {
     MemoryType? type,
     bool includeArchived = false,
     int? limit,
+    String? conversationId,
+    bool excludeConversationBound = false,
   }) async {
     final clauses = <String>[_memoryVisibilitySql(assistantId)];
     final variables = <Variable<Object>>[
       ..._memoryVisibilityVariables(assistantId),
     ];
+    // 会话级记忆: entries bound to a conversation surface only for that
+    // conversation; unbound entries keep their old everywhere-visibility.
+    if (excludeConversationBound) {
+      clauses.add("json_extract(payload, '\$.conversationId') IS NULL");
+    } else if (conversationId != null) {
+      clauses.add(
+        "(json_extract(payload, '\$.conversationId') IS NULL "
+        "OR json_extract(payload, '\$.conversationId') = ?)",
+      );
+      variables.add(Variable<String>(conversationId));
+    }
     if (!includeArchived) {
       clauses.add("status = 'active'");
     }

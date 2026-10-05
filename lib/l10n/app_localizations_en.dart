@@ -8174,6 +8174,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'New memories stay private to this assistant';
 
   @override
+  String get assistantEditWriteScopePerConversation => 'Conversation-local';
+
+  @override
+  String get assistantEditWriteScopePerConversationSubtitle =>
+      'New memories stay inside the conversation they were learned in';
+
+  @override
   String get assistantEditWriteScopeToolDefaultGlobal =>
       'Model chooses (default global)';
 

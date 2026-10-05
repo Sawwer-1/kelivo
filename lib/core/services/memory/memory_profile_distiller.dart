@@ -137,6 +137,7 @@ class MemoryProfileDistiller {
     final identity = await chatRepository.queryVisibleMemories(
       assistantId: assistantId,
       type: MemoryType.identity,
+      excludeConversationBound: true,
     );
     if (identity.isEmpty) {
       traceStep?.parsedResult = 'no_identity_entries';

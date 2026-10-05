@@ -11,9 +11,13 @@ Future<MemorySnapshotState> readMemorySnapshot({
   required String assistantId,
   required MemoryPromptLang lang,
   required int maxItems,
+  String? conversationId,
+  bool excludeConversationBound = false,
 }) async {
   final data = await repository.readMemorySnapshotData(
     assistantId: assistantId,
+    conversationId: conversationId,
+    excludeConversationBound: excludeConversationBound,
   );
   final fields = data.profile;
   final visible = data.memories;

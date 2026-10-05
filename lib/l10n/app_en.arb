@@ -3454,6 +3454,8 @@
   "assistantEditWriteScopeAlwaysGlobalSubtitle": "New memories are shared with every assistant",
   "assistantEditWriteScopeAlwaysAssistant": "Always this assistant",
   "assistantEditWriteScopeAlwaysAssistantSubtitle": "New memories stay private to this assistant",
+  "assistantEditWriteScopePerConversation": "Conversation-local",
+  "assistantEditWriteScopePerConversationSubtitle": "New memories stay inside the conversation they were learned in",
   "assistantEditWriteScopeToolDefaultGlobal": "Model chooses (default global)",
   "assistantEditWriteScopeToolDefaultGlobalSubtitle": "The model may pick global or this assistant; default is global",
   "assistantEditWriteScopeToolDefaultAssistant": "Model chooses (default assistant)",

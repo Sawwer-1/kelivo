@@ -1241,6 +1241,11 @@ class _MemoryWriteScopeSection extends StatelessWidget {
           subtitle: l10n.assistantEditWriteScopeAlwaysAssistantSubtitle,
         ),
         MemoryPickerOption(
+          value: MemoryWriteScope.perConversation,
+          label: l10n.assistantEditWriteScopePerConversation,
+          subtitle: l10n.assistantEditWriteScopePerConversationSubtitle,
+        ),
+        MemoryPickerOption(
           value: MemoryWriteScope.toolDefaultGlobal,
           label: l10n.assistantEditWriteScopeToolDefaultGlobal,
           subtitle: l10n.assistantEditWriteScopeToolDefaultGlobalSubtitle,

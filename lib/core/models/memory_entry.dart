@@ -12,6 +12,10 @@ class MemoryEntry {
   final String id;
   final MemoryScope scope;
   final String? assistantId;
+
+  /// 会话级记忆 binding: non-null restricts visibility to this conversation.
+  /// Requires [scope] == assistant and [assistantId] set.
+  final String? conversationId;
   final MemoryType type;
   final MemoryStatus status;
   final String content;
@@ -25,6 +29,7 @@ class MemoryEntry {
     required this.id,
     required this.scope,
     this.assistantId,
+    this.conversationId,
     required this.type,
     this.status = MemoryStatus.active,
     required this.content,
@@ -48,10 +53,15 @@ class MemoryEntry {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool clearAssistantId = false,
+    String? conversationId,
+    bool clearConversationId = false,
   }) => MemoryEntry(
     id: id ?? this.id,
     scope: scope ?? this.scope,
     assistantId: clearAssistantId ? null : (assistantId ?? this.assistantId),
+    conversationId: clearConversationId
+        ? null
+        : (conversationId ?? this.conversationId),
     type: type ?? this.type,
     status: status ?? this.status,
     content: content ?? this.content,
@@ -66,6 +76,7 @@ class MemoryEntry {
     'id': id,
     'scope': scopeToString(scope),
     'assistantId': assistantId,
+    if (conversationId != null) 'conversationId': conversationId,
     'type': typeToString(type),
     'status': statusToString(status),
     'content': content,
@@ -82,6 +93,7 @@ class MemoryEntry {
       id: json['id'] as String,
       scope: scope,
       assistantId: json['assistantId'] as String?,
+      conversationId: json['conversationId'] as String?,
       type: typeFromString(json['type'] as String),
       status: statusFromString((json['status'] as String?) ?? 'active'),
       content: json['content'] as String,

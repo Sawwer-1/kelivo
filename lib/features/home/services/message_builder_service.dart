@@ -1646,6 +1646,7 @@ class MessageBuilderService {
     required Assistant assistant,
     required MemoryPromptLang lang,
     SettingsProvider? settings,
+    String? conversationId,
   }) async {
     final repo = _repo;
     if (repo == null) return null;
@@ -1665,6 +1666,7 @@ class MessageBuilderService {
       assistantId: assistant.id,
       lang: lang,
       maxItems: maxItems,
+      conversationId: conversationId,
     );
   }
 
@@ -1691,6 +1693,7 @@ class MessageBuilderService {
       assistant: assistant,
       lang: lang,
       settings: settings,
+      conversationId: conversation.id,
     );
     if (current == null) return _noMemoryPrefix;
     pass?.recordCurrentSnapshot(current);

@@ -73,12 +73,16 @@ class SmartAddItem {
     required this.content,
     required this.scope,
     this.assistantId,
+    this.conversationId,
   });
 
   final MemoryType type;
   final String content;
   final MemoryScope scope;
   final String? assistantId;
+
+  /// 会话级记忆 binding, stamped by callers under perConversation policy.
+  final String? conversationId;
 }
 
 /// Smart Add: candidate retrieval, LLM judge, NEW/MERGE/CONFLICT/SKIP (§12.6).
@@ -443,6 +447,7 @@ class MemorySmartAdd {
           assistantId: item.scope == MemoryScope.assistant
               ? item.assistantId
               : null,
+          conversationId: item.conversationId,
           type: item.type,
           content: item.content,
           source: source,
@@ -503,6 +508,7 @@ class MemorySmartAdd {
           assistantId: item.scope == MemoryScope.assistant
               ? item.assistantId
               : null,
+          conversationId: item.conversationId,
           type: item.type,
           content: item.content,
           source: source,

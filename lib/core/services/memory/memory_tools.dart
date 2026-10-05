@@ -288,6 +288,7 @@ abstract final class MemoryTools {
           result = await _handleMemoryUpdate(
             args: args,
             assistant: assistant,
+            conversationId: conversationId,
             repository: repository,
             chatRepository: chatRepository,
             smartAdd: smartAdd,
@@ -429,6 +430,8 @@ abstract final class MemoryTools {
         return MemoryScope.global;
       case MemoryWriteScope.alwaysAssistant:
         return MemoryScope.assistant;
+      case MemoryWriteScope.perConversation:
+        return MemoryScope.assistant;
       case MemoryWriteScope.toolDefaultGlobal:
         if (scopeArg == 'assistant') return MemoryScope.assistant;
         return MemoryScope.global;
@@ -508,6 +511,7 @@ abstract final class MemoryTools {
     String? smartAddPromptZh,
     String? smartAddPromptEn,
     MemoryTraceStep? traceStep,
+    String? conversationId,
   }) async {
     final type = _parseMemoryType(args['type']);
     if (type == null) {
@@ -530,6 +534,12 @@ abstract final class MemoryTools {
     final scopeArg = args['scope']?.toString();
     final scope = resolveWriteScope(assistant.memoryWriteScope, scopeArg);
     final assistantId = scope == MemoryScope.assistant ? assistant.id : null;
+    // 会话级记忆: under perConversation policy every tool write binds to the
+    // conversation it was made from.
+    final conversationBinding =
+        assistant.memoryWriteScope == MemoryWriteScope.perConversation
+        ? conversationId
+        : null;
 
     // Real Smart Add when wired (§12.6); else exact-duplicate → SKIP / NEW.
     final adder =
@@ -541,6 +551,7 @@ abstract final class MemoryTools {
         content: content,
         scope: scope,
         assistantId: assistantId,
+        conversationId: conversationBinding,
       ),
       visibilityAssistantId: assistant.id,
       source: MemorySource.tool,

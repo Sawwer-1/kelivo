@@ -11,6 +11,7 @@ enum DefaultWorkspaceSetup { automatic, suggest, completed }
 enum MemoryWriteScope {
   alwaysGlobal,
   alwaysAssistant,
+  perConversation,
   toolDefaultGlobal,
   toolDefaultAssistant,
 }
@@ -522,6 +523,8 @@ class Assistant {
         return 'alwaysGlobal';
       case MemoryWriteScope.alwaysAssistant:
         return 'alwaysAssistant';
+      case MemoryWriteScope.perConversation:
+        return 'perConversation';
       case MemoryWriteScope.toolDefaultGlobal:
         return 'toolDefaultGlobal';
       case MemoryWriteScope.toolDefaultAssistant:
@@ -533,6 +536,8 @@ class Assistant {
     switch (value) {
       case 'alwaysAssistant':
         return MemoryWriteScope.alwaysAssistant;
+      case 'perConversation':
+        return MemoryWriteScope.perConversation;
       case 'toolDefaultGlobal':
         return MemoryWriteScope.toolDefaultGlobal;
       case 'toolDefaultAssistant':

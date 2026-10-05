@@ -46,6 +46,7 @@ Future<String?> readContextMemorySnapshotHash({
     assistantId: assistant!.id,
     lang: settings.resolvedMemoryPromptLang,
     maxItems: settings.memoryInjectionMaxItems,
+    excludeConversationBound: true,
   );
   return snapshot.isEmpty ? null : snapshot.hash;
 }

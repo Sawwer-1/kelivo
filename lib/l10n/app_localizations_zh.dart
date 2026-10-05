@@ -7834,6 +7834,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditWriteScopeAlwaysAssistantSubtitle => '新记忆只对本助手可见';
 
   @override
+  String get assistantEditWriteScopePerConversation => '会话内';
+
+  @override
+  String get assistantEditWriteScopePerConversationSubtitle =>
+      '新记忆只保留在学到它的那个会话里';
+
+  @override
   String get assistantEditWriteScopeToolDefaultGlobal => '模型自选（默认全局）';
 
   @override
@@ -19983,6 +19990,13 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get assistantEditWriteScopeAlwaysAssistantSubtitle => '新记忆只对本助手可见';
+
+  @override
+  String get assistantEditWriteScopePerConversation => '会话内';
+
+  @override
+  String get assistantEditWriteScopePerConversationSubtitle =>
+      '新记忆只保留在学到它的那个会话里';
 
   @override
   String get assistantEditWriteScopeToolDefaultGlobal => '模型自选（默认全局）';

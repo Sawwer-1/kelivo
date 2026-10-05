@@ -9,6 +9,7 @@ class MemoryCreateDraft {
   const MemoryCreateDraft({
     required this.scope,
     this.assistantId,
+    this.conversationId,
     required this.type,
     required this.content,
     required this.source,
@@ -18,6 +19,7 @@ class MemoryCreateDraft {
 
   final MemoryScope scope;
   final String? assistantId;
+  final String? conversationId;
   final MemoryType type;
   final String content;
   final MemorySource source;
@@ -58,13 +60,14 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
   Future<MemoryEntry> create({
     required MemoryScope scope,
     String? assistantId,
+    String? conversationId,
     required MemoryType type,
     required String content,
     required MemorySource source,
     List<String> relatedIds = const [],
   }) {
     return runExclusive(() async {
-      _validateScope(scope, assistantId);
+      _validateScope(scope, assistantId, conversationId: conversationId);
       final all = await readAll();
       final taken = {for (final entry in all) entry.id};
       final id = _newUniqueId(taken);
@@ -73,6 +76,7 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
         id: id,
         scope: scope,
         assistantId: assistantId,
+        conversationId: conversationId,
         type: type,
         status: MemoryStatus.active,
         content: content,
@@ -98,7 +102,11 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
     }
     return runExclusive(() async {
       for (final draft in drafts) {
-        _validateScope(draft.scope, draft.assistantId);
+        _validateScope(
+          draft.scope,
+          draft.assistantId,
+          conversationId: draft.conversationId,
+        );
         if (draft.migrationId != null && draft.migrationId!.trim().isEmpty) {
           throw ArgumentError.value(
             draft.migrationId,
@@ -116,7 +124,12 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
       final contentIndexes = <String, int>{};
       for (var i = 0; i < all.length; i++) {
         contentIndexes.putIfAbsent(
-          _contentKey(all[i].scope, all[i].assistantId, all[i].content),
+          _contentKey(
+            all[i].scope,
+            all[i].assistantId,
+            all[i].conversationId,
+            all[i].content,
+          ),
           () => i,
         );
       }
@@ -135,6 +148,7 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
         final contentKey = _contentKey(
           draft.scope,
           draft.assistantId,
+          draft.conversationId,
           draft.content,
         );
         final existingIndex = contentIndexes[contentKey];
@@ -157,6 +171,7 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
           id: id,
           scope: draft.scope,
           assistantId: draft.assistantId,
+          conversationId: draft.conversationId,
           type: draft.type,
           status: MemoryStatus.active,
           content: draft.content,
@@ -407,7 +422,21 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
     });
   }
 
-  static void _validateScope(MemoryScope scope, String? assistantId) {
+  static void _validateScope(
+    MemoryScope scope,
+    String? assistantId, {
+    String? conversationId,
+  }) {
+    if (conversationId != null &&
+        (scope != MemoryScope.assistant ||
+            assistantId == null ||
+            assistantId.isEmpty)) {
+      throw ArgumentError.value(
+        conversationId,
+        'conversationId',
+        'Requires assistant scope with a non-empty assistantId',
+      );
+    }
     if (scope == MemoryScope.global && assistantId != null) {
       throw ArgumentError.value(
         assistantId,
@@ -438,6 +467,7 @@ class MemoryRepository extends JsonBlobStore<MemoryEntry> {
   static String _contentKey(
     MemoryScope scope,
     String? assistantId,
+    String? conversationId,
     String content,
   ) {
     return '${MemoryEntry.scopeToString(scope)}\u0000${assistantId ?? ''}\u0000'

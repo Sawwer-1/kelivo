@@ -2904,6 +2904,8 @@
   "assistantEditWriteScopeAlwaysGlobalSubtitle": "新记忆对所有助手可见",
   "assistantEditWriteScopeAlwaysAssistant": "一律本助手",
   "assistantEditWriteScopeAlwaysAssistantSubtitle": "新记忆只对本助手可见",
+  "assistantEditWriteScopePerConversation": "会话内",
+  "assistantEditWriteScopePerConversationSubtitle": "新记忆只保留在学到它的那个会话里",
   "assistantEditWriteScopeToolDefaultGlobal": "模型自选（默认全局）",
   "assistantEditWriteScopeToolDefaultGlobalSubtitle": "模型可选择全局或本助手，缺省写入全局",
   "assistantEditWriteScopeToolDefaultAssistant": "模型自选（默认本助手）",

@@ -14845,6 +14845,18 @@ abstract class AppLocalizations {
   /// **'New memories stay private to this assistant'**
   String get assistantEditWriteScopeAlwaysAssistantSubtitle;
 
+  /// No description provided for @assistantEditWriteScopePerConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation-local'**
+  String get assistantEditWriteScopePerConversation;
+
+  /// No description provided for @assistantEditWriteScopePerConversationSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New memories stay inside the conversation they were learned in'**
+  String get assistantEditWriteScopePerConversationSubtitle;
+
   /// No description provided for @assistantEditWriteScopeToolDefaultGlobal.
   ///
   /// In en, this message translates to:

@@ -31,6 +31,7 @@ MemoryTraceScope memoryTraceScopeOf(MemoryWriteScope scope) {
       return MemoryTraceScope.global;
     case MemoryWriteScope.alwaysAssistant:
     case MemoryWriteScope.toolDefaultAssistant:
+    case MemoryWriteScope.perConversation:
       return MemoryTraceScope.assistant;
   }
 }

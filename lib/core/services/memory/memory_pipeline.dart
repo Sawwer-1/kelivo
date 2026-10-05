@@ -768,6 +768,11 @@ class MemoryPipelineService {
             content: item.content,
             scope: scope,
             assistantId: scope == MemoryScope.assistant ? assistant.id : null,
+            // 会话级记忆: extraction binds candidates to this conversation.
+            conversationId:
+                assistant.memoryWriteScope == MemoryWriteScope.perConversation
+                ? conversationId
+                : null,
           );
         }(),
     ];
