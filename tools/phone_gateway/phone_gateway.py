@@ -240,10 +240,18 @@ def phone_dump_ui(device: str = "") -> str:
     """Dump the window hierarchy XML (uiautomator). Returns the file path and
     the inline XML (truncated); use bounds of nodes as tap/swipe coordinates."""
     serial = _pick(device)
-    remote = "/sdcard/kelivo_gateway_window.xml"
+    # /data/local/tmp avoids scoped-storage limits; uiautomator still refuses
+    # while the screen is locked or the device is busy ("could not get idle
+    # state") — surface that as an actionable hint instead of empty output.
+    remote = "/data/local/tmp/kelivo_gateway_window.xml"
     out = _shell(f"uiautomator dump {remote}", device=serial, timeout=30)
     if "dumped" not in out.lower():
-        return out
+        hint = (
+            "\n[hint] uiautomator needs an idle, unlocked screen. "
+            "Unlock the phone (or bring a stable screen to front) and retry. "
+            "Raw output: " + out.strip()
+        )
+        return hint
     host_dir = os.path.join(tempfile.gettempdir(), "kelivo_phone_gateway")
     os.makedirs(host_dir, exist_ok=True)
     host = os.path.join(host_dir, f"window_{serial.replace(':', '_')}.xml")
