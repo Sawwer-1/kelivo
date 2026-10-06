@@ -10,6 +10,7 @@ import '../models/assistant.dart';
 import '../models/assistant_regex.dart';
 import '../models/preset_message.dart';
 import '../services/chat/chat_service.dart';
+import 'settings_provider.dart' show SettingsProvider;
 import '../../l10n/app_localizations.dart';
 import '../../utils/avatar_cache.dart';
 import '../../utils/app_directories.dart';
@@ -488,6 +489,11 @@ class AssistantProvider extends ChangeNotifier {
     if (idx == -1) return false;
     // Do not allow deleting the last remaining assistant
     if (_assistants.length <= 1) return false;
+    // C1: the Owner assistant is fixed identity infrastructure and cannot
+    // be deleted (belt); the UI also blocks this earlier with a hint
+    // (braces).
+    final owner = preferences.getString(SettingsProvider.ownerAssistantIdKey);
+    if (owner != null && owner == id) return false;
 
     await chatService?.deleteConversationsForAssistant(id);
 

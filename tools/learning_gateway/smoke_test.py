@@ -74,7 +74,26 @@ async def main() -> None:
 
             recall = await call(session, "learning_recall", {"query": "ci"})
             assert len(recall) == 1 and recall[0]["id"] == lid, recall
+            assert recall[0]["retrieval_confirmed"] == 0, recall
             print("recall after promote ok")
+
+            # Retrieval shadow: the model confirms the recalled lesson
+            # actually applied; evidence accrues (promote + confirm) and
+            # the promoted snapshot marks the entry verified.
+            conf = await call(session, "learning_confirm_retrieval", {
+                "lesson_id": lid, "note": "shaped the deploy plan",
+            })
+            assert conf["retrieval_confirmed"] == 1, conf
+            assert conf["evidence_count"] == 2, conf
+            snap = json.loads(
+                (Path(tmp) / "promoted_snapshot.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            assert snap["count"] == 1, snap
+            entry = next(e for e in snap["entries"] if e["id"] == lid)
+            assert entry["retrieval_confirmed"] is True, entry
+            print("retrieval shadow + snapshot ok")
 
             stats = await call(session, "learning_stats", {})
             assert stats["by_status"].get("promoted") == 1, stats
@@ -127,6 +146,18 @@ async def main() -> None:
             assert book["name"] and book["entries"], export
             assert book["entries"][0]["constantActive"] is False
             print(f"worldbook export ok: {export['entries']} entries")
+
+            # Archiving removes the lesson from the promoted snapshot too
+            # (2 promoted before this: the CI lesson and the CJK one).
+            await call(session, "learning_archive",
+                       {"lesson_id": r["id"], "note": "smoke cleanup"})
+            snap = json.loads(
+                (Path(tmp) / "promoted_snapshot.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            assert snap["count"] == 1, snap
+            print("archive snapshot refresh ok")
 
             print("SMOKE_OK (db in", tmp, ")")
 

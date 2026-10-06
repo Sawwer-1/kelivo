@@ -7681,6 +7681,12 @@ abstract class AppLocalizations {
   /// **'Leave empty to use default'**
   String get providerDetailPageApiKeyHint;
 
+  /// No description provided for @credentialRevealAuthReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify to show the API key'**
+  String get credentialRevealAuthReason;
+
   /// No description provided for @providerDetailPageHideTooltip.
   ///
   /// In en, this message translates to:
@@ -12337,6 +12343,30 @@ abstract class AppLocalizations {
   /// **'Complete Reminder'**
   String get assistantEditLocalToolRemindersCompleteTitle;
 
+  /// No description provided for @ownerToolListConversationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: list conversations'**
+  String get ownerToolListConversationsTitle;
+
+  /// No description provided for @ownerToolReadConversationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: read conversation'**
+  String get ownerToolReadConversationTitle;
+
+  /// No description provided for @ownerToolListAssistantsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: list assistants'**
+  String get ownerToolListAssistantsTitle;
+
+  /// No description provided for @ownerToolListProvidersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: list providers'**
+  String get ownerToolListProvidersTitle;
+
   /// No description provided for @assistantEditLocalToolRemindersCompleteSubtitle.
   ///
   /// In en, this message translates to:
@@ -12991,11 +13021,47 @@ abstract class AppLocalizations {
   /// **'After each reply finishes, that turn is dropped into the learning gateway inbox (%APPDATA%\\kelivo_learning\\inbox); learning_ingest_inbox distills it into pending lessons. Off by default.'**
   String get bypassLearningSettingSubtitle;
 
+  /// No description provided for @learningAutoInjectSettingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-inject learned policy'**
+  String get learningAutoInjectSettingTitle;
+
+  /// No description provided for @learningAutoInjectSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Append promoted lessons from the learning gateway to every system prompt. Verified entries guide behavior; unverified ones are reference-only.'**
+  String get learningAutoInjectSettingSubtitle;
+
   /// No description provided for @settingsPageOwnerIdentity.
   ///
   /// In en, this message translates to:
   /// **'Owner Identity'**
   String get settingsPageOwnerIdentity;
+
+  /// No description provided for @ownerAssistantSettingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner assistant'**
+  String get ownerAssistantSettingTitle;
+
+  /// No description provided for @ownerAssistantSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This assistant carries the Owner identity and cannot be deleted. Switching it revokes standing tool approvals.'**
+  String get ownerAssistantSettingSubtitle;
+
+  /// No description provided for @ownerAssistantDropdownNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get ownerAssistantDropdownNone;
+
+  /// No description provided for @ownerAssistantDeleteBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the Owner assistant. Deletion is blocked — change or clear it in Owner Identity settings first.'**
+  String get ownerAssistantDeleteBlocked;
 
   /// No description provided for @ownerIdentityPageTitle.
   ///

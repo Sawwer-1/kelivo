@@ -15,6 +15,7 @@ import '../services/search/search_service.dart';
 import '../services/tts/network_tts.dart';
 import '../services/tts/tts_text_selection.dart';
 import '../services/asr/asr_service_options.dart';
+import '../services/key_vault/credential_sealer.dart';
 import '../services/network/request_logger.dart';
 import '../services/logging/context_logger.dart';
 import '../services/logging/flutter_logger.dart';
@@ -351,6 +352,11 @@ class SettingsProvider extends ChangeNotifier {
   // turns into the learning gateway inbox; the gateway distills them into
   // shadow lessons. Local-only preference.
   static const String _bypassLearningEnabledKey = 'bypass_learning_enabled_v1';
+  static const String _learningAutoInjectKey = 'learning_auto_inject_v1';
+
+  /// C1: the assistant carrying the Owner identity. Public so the
+  /// assistant provider can guard deletion without importing state.
+  static const String ownerAssistantIdKey = 'owner_assistant_id_v1';
   // Owner identity (AAA furnace-2): a user-authored, model read-only
   // declaration injected into the system prompt. Local-only preference.
   static const String _ownerIdentityEnabledKey = 'owner_identity_enabled_v1';
@@ -1065,6 +1071,9 @@ class SettingsProvider extends ChangeNotifier {
         localPreferences.getBool(_bypassLearningEnabledKey) ?? false;
     _ownerIdentityEnabled =
         localPreferences.getBool(_ownerIdentityEnabledKey) ?? false;
+    _learningAutoInject =
+        localPreferences.getBool(_learningAutoInjectKey) ?? true;
+    _ownerAssistantId = localPreferences.getString(ownerAssistantIdKey);
     _ownerName = localPreferences.getString(_ownerNameKey) ?? '';
     _ownerDeclaration =
         localPreferences.getString(_ownerDeclarationKey) ?? '';
@@ -1368,7 +1377,13 @@ class SettingsProvider extends ChangeNotifier {
     try {
       final ttsStr = prefs.getString(_ttsServicesKey) ?? '';
       if (ttsStr.isNotEmpty) {
-        final list = jsonDecode(ttsStr) as List;
+        // One-shot at-rest migration: seal plaintext apiKeys (idempotent).
+        final ttsSealed = CredentialSealer.sealApiKeyList(ttsStr);
+        if (ttsSealed != ttsStr) {
+          await prefs.setString(_ttsServicesKey, ttsSealed);
+        }
+        final list =
+            jsonDecode(CredentialSealer.unsealApiKeyList(ttsSealed)) as List;
         var generatedMissingIds = false;
         _ttsServices = [
           for (final value in list)
@@ -1387,8 +1402,10 @@ class SettingsProvider extends ChangeNotifier {
         if (generatedMissingIds) {
           await prefs.setString(
             _ttsServicesKey,
-            jsonEncode(
-              _ttsServices.map((service) => service.toJson()).toList(),
+            CredentialSealer.sealApiKeyList(
+              jsonEncode(
+                _ttsServices.map((service) => service.toJson()).toList(),
+              ),
             ),
           );
         }
@@ -1423,7 +1440,14 @@ class SettingsProvider extends ChangeNotifier {
     try {
       final raw = prefs.getString(_asrServicesKey) ?? '';
       if (raw.isNotEmpty) {
-        final list = jsonDecode(raw) as List<dynamic>;
+        // One-shot at-rest migration: seal plaintext apiKeys (idempotent).
+        final sealed = CredentialSealer.sealApiKeyList(raw);
+        if (sealed != raw) {
+          await prefs.setString(_asrServicesKey, sealed);
+        }
+        final list =
+            jsonDecode(CredentialSealer.unsealApiKeyList(sealed))
+                as List<dynamic>;
         for (final value in list) {
           try {
             decodedAsrServices.add(
@@ -1621,7 +1645,11 @@ class SettingsProvider extends ChangeNotifier {
     }
     notifyListeners();
     final list = v.map((e) => e.toJson()).toList();
-    await prefs.setString(_ttsServicesKey, jsonEncode(list));
+    await prefs.setString(
+      _ttsServicesKey,
+      // Sealed at rest (no-op when the vault is unsupported); load unseals.
+      CredentialSealer.sealApiKeyList(jsonEncode(list)),
+    );
     if (selectionMissing) {
       await _persistSelectedTtsServiceId(prefs);
     }
@@ -1680,7 +1708,10 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = _preferences;
     await prefs.setString(
       _asrServicesKey,
-      jsonEncode(_asrServices.map((service) => service.toJson()).toList()),
+      // Sealed at rest (no-op when the vault is unsupported); load unseals.
+      CredentialSealer.sealApiKeyList(
+        jsonEncode(_asrServices.map((service) => service.toJson()).toList()),
+      ),
     );
     await _persistSelectedAsrServiceId(prefs);
   }
@@ -5545,6 +5576,36 @@ Requirements:
   // Owner identity (AAA furnace-2): user-authored, model read-only.
   bool _ownerIdentityEnabled = false;
   bool get ownerIdentityEnabled => _ownerIdentityEnabled;
+
+  // Learning auto-inject (AAA B2): promote/confirm snapshots from the
+  // learning gateway are appended to the system message each turn.
+  bool _learningAutoInject = true;
+  bool get learningAutoInject => _learningAutoInject;
+  Future<void> setLearningAutoInject(bool v) async {
+    if (_learningAutoInject == v) return;
+    _learningAutoInject = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_learningAutoInjectKey, v);
+  }
+
+  // C1: fixed Owner assistant. Deleting it is blocked; changing it revokes
+  // standing tool approvals (epoch reset).
+  String? _ownerAssistantId;
+  String? get ownerAssistantId => _ownerAssistantId;
+  Future<void> setOwnerAssistantId(String? v) async {
+    final next = (v == null || v.isEmpty) ? null : v;
+    if (_ownerAssistantId == next) return;
+    _ownerAssistantId = next;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    if (next == null) {
+      await prefs.remove(ownerAssistantIdKey);
+    } else {
+      await prefs.setString(ownerAssistantIdKey, next);
+    }
+  }
+
   String _ownerName = '';
   String get ownerName => _ownerName;
   String _ownerDeclaration = '';

@@ -556,6 +556,19 @@ class ToolHandlerService {
           }
         }
 
+        // Owner read-only tools (C3 phase 1): wire their data sources per
+        // call. Providers may be absent in stripped-down call sites.
+        OwnerToolContext? ownerContext;
+        try {
+          ownerContext = OwnerToolContext(
+            chatService: contextProvider.read<ChatService>(),
+            assistantProvider: assistantProvider,
+            settings: settings,
+          );
+        } catch (_) {
+          ownerContext = null;
+        }
+
         // Local tools
         final localResult = await LocalToolsService.tryHandleToolCall(
           name,
@@ -579,6 +592,7 @@ class ToolHandlerService {
               }),
             );
           },
+          ownerContext: ownerContext,
         );
         if (localResult != null) {
           return localResult;

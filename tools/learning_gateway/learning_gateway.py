@@ -37,11 +37,13 @@ mcp = FastMCP(
         "Long-term operational learning for this agent. Record a lesson when "
         "the user corrects how you work, reveals a preference, or a workflow "
         "succeeds/fails in a way worth remembering (learning_record). Before "
-        "non-trivial tasks, recall relevant lessons (learning_recall). "
+        "non-trivial tasks, recall relevant lessons (learning_recall). When "
+        "a recalled lesson genuinely shaped your answer, confirm it "
+        "(learning_confirm_retrieval) so it becomes verified evidence. "
         "Run learning_ingest_inbox at session start to pick up lessons the "
         "host captured bypass-style from finished conversation turns. "
-        "Promoted lessons feed the world-book export; shadow ones wait for "
-        "human review."
+        "Promoted lessons feed the always-on snapshot and world-book "
+        "export; shadow ones wait for human review."
     ),
 )
 
@@ -123,8 +125,22 @@ def _db() -> sqlite3.Connection:
             content TEXT, content_normalized TEXT,
             status TEXT DEFAULT 'shadow',
             confidence REAL DEFAULT 0.6, source TEXT DEFAULT '',
-            use_count INTEGER DEFAULT 0, last_used_at INTEGER)"""
+            use_count INTEGER DEFAULT 0, last_used_at INTEGER,
+            retrieval_confirmed INTEGER DEFAULT 0,
+            evidence TEXT DEFAULT '')"""
         )
+        # Migration for databases created before the retrieval-shadow columns
+        # existed: add any missing column (idempotent).
+        cols = {r[1] for r in _conn.execute("PRAGMA table_info(lessons)")}
+        if "retrieval_confirmed" not in cols:
+            _conn.execute(
+                "ALTER TABLE lessons ADD COLUMN retrieval_confirmed "
+                "INTEGER DEFAULT 0"
+            )
+        if "evidence" not in cols:
+            _conn.execute(
+                "ALTER TABLE lessons ADD COLUMN evidence TEXT DEFAULT ''"
+            )
         _conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_lessons_status ON lessons(status)"
         )
@@ -201,6 +217,84 @@ def _insert_lesson(
 
 def _rows_to_json(rows) -> str:
     return json.dumps([dict(r) for r in rows], ensure_ascii=False, indent=2)
+
+
+# ---------------------------------------------------------------------------
+# retrieval shadow: evidence + promoted snapshot bridge
+
+
+def _load_evidence(db: sqlite3.Connection, lesson_id: str) -> list:
+    row = db.execute(
+        "SELECT evidence FROM lessons WHERE id = ?", (lesson_id,)
+    ).fetchone()
+    if row is None:
+        return []
+    try:
+        data = json.loads(row["evidence"] or "[]")
+        return data if isinstance(data, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def _append_evidence(
+    db: sqlite3.Connection, lesson_id: str, kind: str, ref: str
+) -> int:
+    """Append one evidence entry; returns the new evidence count."""
+    evidence = _load_evidence(db, lesson_id)
+    evidence.append(
+        {"ts": _now(), "kind": kind, "ref": (ref or "").strip()[:120]}
+    )
+    db.execute(
+        "UPDATE lessons SET evidence = ? WHERE id = ?",
+        (json.dumps(evidence, ensure_ascii=False), lesson_id),
+    )
+    return len(evidence)
+
+
+def _snapshot_path() -> Path:
+    return _db_path().parent / "promoted_snapshot.json"
+
+
+def _refresh_snapshot(db: sqlite3.Connection) -> None:
+    """Rewrite the promoted-lessons snapshot the host's message builder
+    consumes for always-on injection (the file bridge). Verified entries
+    (retrieval-confirmed) sort first. Atomic-ish: write tmp, then swap."""
+    rows = db.execute(
+        "SELECT id, ts, type, tags, content, confidence, use_count, "
+        "retrieval_confirmed FROM lessons WHERE status = 'promoted' "
+        "ORDER BY retrieval_confirmed DESC, use_count DESC, ts ASC"
+    ).fetchall()
+    entries = []
+    for r in rows:
+        try:
+            tags = json.loads(r["tags"] or "[]")
+        except (json.JSONDecodeError, TypeError):
+            tags = []
+        entries.append(
+            {
+                "id": r["id"],
+                "ts": r["ts"],
+                "type": r["type"],
+                "tags": tags,
+                "content": r["content"],
+                "confidence": r["confidence"],
+                "use_count": r["use_count"],
+                "retrieval_confirmed": bool(r["retrieval_confirmed"]),
+            }
+        )
+    payload = {
+        "version": 1,
+        "generated_at": _now(),
+        "count": len(entries),
+        "entries": entries,
+    }
+    target = _snapshot_path()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    tmp = target.with_name(target.stem + ".json.tmp")
+    tmp.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    tmp.replace(target)
 
 
 # ---------------------------------------------------------------------------
@@ -320,28 +414,69 @@ def learning_review_queue(limit: int = 20) -> str:
     return _rows_to_json(rows)
 
 
-def _set_status(lesson_id: str, status: str) -> str:
+def _set_status(lesson_id: str, status: str, note: str = "") -> str:
     db = _db()
     cur = db.execute(
         "UPDATE lessons SET status = ? WHERE id = ?", (status, lesson_id)
     )
-    db.commit()
     if cur.rowcount == 0:
+        db.commit()
         return json.dumps({"error": f"unknown lesson id: {lesson_id}"})
-    return json.dumps({"id": lesson_id, "status": status})
+    count = _append_evidence(db, lesson_id, status, note)
+    db.commit()
+    _refresh_snapshot(db)
+    return json.dumps(
+        {
+            "id": lesson_id,
+            "status": status,
+            "evidence_count": count,
+        }
+    )
 
 
 @mcp.tool()
-def learning_promote(lesson_id: str) -> str:
+def learning_promote(lesson_id: str, note: str = "") -> str:
     """Promote a shadow lesson after human review: it now surfaces in recall
-    and world-book export."""
-    return _set_status(lesson_id, "promoted")
+    and the always-on snapshot. note: optional review context, stored as
+    promotion evidence."""
+    return _set_status(lesson_id, "promoted", note)
 
 
 @mcp.tool()
-def learning_archive(lesson_id: str) -> str:
-    """Archive a lesson (wrong or obsolete): hidden from recall and export."""
-    return _set_status(lesson_id, "archived")
+def learning_archive(lesson_id: str, note: str = "") -> str:
+    """Archive a lesson (wrong or obsolete): hidden from recall, snapshot
+    and export. note: optional reason, stored as archive evidence."""
+    return _set_status(lesson_id, "archived", note)
+
+
+@mcp.tool()
+def learning_confirm_retrieval(lesson_id: str, note: str = "") -> str:
+    """Confirm a recalled lesson actually applied in the current turn
+    (retrieval shadow → verified). Appends retrieval evidence and sets
+    retrieval_confirmed, then refreshes the promoted snapshot so always-on
+    injection marks the lesson verified. Call this when a lesson you
+    recalled genuinely shaped your answer."""
+    db = _db()
+    row = db.execute(
+        "SELECT id FROM lessons WHERE id = ?", (lesson_id,)
+    ).fetchone()
+    if row is None:
+        return json.dumps({"error": f"unknown lesson id: {lesson_id}"})
+    count = _append_evidence(db, lesson_id, "retrieval_confirm", note)
+    db.execute(
+        "UPDATE lessons SET retrieval_confirmed = 1 WHERE id = ?",
+        (lesson_id,),
+    )
+    db.commit()
+    _refresh_snapshot(db)
+    return json.dumps(
+        {
+            "id": lesson_id,
+            "retrieval_confirmed": 1,
+            "evidence_count": count,
+        },
+        ensure_ascii=False,
+    )
 
 
 @mcp.tool()

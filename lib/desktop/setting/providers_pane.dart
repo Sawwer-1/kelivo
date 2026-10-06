@@ -1552,8 +1552,12 @@ class _DesktopProviderDetailPaneState extends State<DesktopProviderDetailPane> {
                         onExit: (_) => setState(() => _eyeHover = false),
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () =>
-                              setState(() => _showApiKey = !_showApiKey),
+                          onTap: () => BiometricGate.gatedToggle(
+                            revealing: !_showApiKey,
+                            reason: l10n.credentialRevealAuthReason,
+                            toggle: () =>
+                                setState(() => _showApiKey = !_showApiKey),
+                          ),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
                             curve: Curves.easeOutCubic,

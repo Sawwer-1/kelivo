@@ -5,6 +5,7 @@ import '../../../icons/lucide_adapter.dart';
 import '../../../core/providers/tts_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../utils/brand_assets.dart';
+import '../../../core/services/key_vault/biometric_gate.dart';
 import '../../../core/services/tts/network_tts.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/snackbar.dart';
@@ -1812,6 +1813,7 @@ class _TtsEditorTextFieldState extends State<_TtsEditorTextField> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final fieldBg = context.appColors.surfaceFill;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1864,7 +1866,11 @@ class _TtsEditorTextFieldState extends State<_TtsEditorTextField> {
               suffixIcon: widget.obscure
                   ? _SmallTactileIcon(
                       icon: _obscured ? Lucide.Eye : Lucide.EyeOff,
-                      onTap: () => setState(() => _obscured = !_obscured),
+                      onTap: () => BiometricGate.gatedToggle(
+                        revealing: _obscured,
+                        reason: l10n.credentialRevealAuthReason,
+                        toggle: () => setState(() => _obscured = !_obscured),
+                      ),
                     )
                   : null,
             ),

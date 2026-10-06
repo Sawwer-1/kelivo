@@ -33,6 +33,12 @@ on:
         default: true
         type: boolean
 
+      run_analyze:
+        description: '构建前运行 dart analyze（仅记录结果，不阻断构建）'
+        required: false
+        default: true
+        type: boolean
+
       build_linux:
         description: '构建 Linux'
         required: false
@@ -312,6 +318,11 @@ jobs:
 
       - name: 🔧 获取依赖
         run: flutter pub get
+
+      - name: 🔍 dart analyze（结果仅记录）
+        if: ${{ github.event.inputs.run_analyze == 'true' }}
+        continue-on-error: true
+        run: dart analyze lib
 
       - name: 🔍 验证 CMake 版本
         shell: pwsh

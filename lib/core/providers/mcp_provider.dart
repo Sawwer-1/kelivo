@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import '../database/business_preferences.dart';
+import '../services/key_vault/credential_sealer.dart';
 import '../services/mcp/kelivo_fetch/kelivo_fetch_server.dart';
 import '../services/mcp/mcp_oauth_service.dart';
 import '../services/mcp/stdio_command_resolver.dart';
@@ -471,8 +472,16 @@ class McpProvider extends ChangeNotifier {
     }
     final raw = preferences.getString(_prefsKey);
     if (raw != null && raw.isNotEmpty) {
+      // One-shot at-rest migration: seal plaintext credential leftovers from
+      // earlier versions. Idempotent — a no-op once everything is sealed.
+      final sealed = CredentialSealer.sealMcpServers(raw);
+      if (sealed != raw) {
+        await preferences.setString(_prefsKey, sealed);
+      }
+      // In-memory configs always hold plaintext (consumers need real values).
+      final usable = CredentialSealer.unsealMcpServers(sealed);
       try {
-        final list = (jsonDecode(raw) as List)
+        final list = (jsonDecode(usable) as List)
             .map(
               (e) =>
                   McpServerConfig.fromJson((e as Map).cast<String, dynamic>()),
@@ -521,7 +530,10 @@ class McpProvider extends ChangeNotifier {
   Future<void> _persistServers(List<McpServerConfig> servers) async {
     await preferences.setString(
       _prefsKey,
-      jsonEncode(servers.map((e) => e.toJson()).toList()),
+      // Sealed at rest (no-op when the vault is unsupported); load unseals.
+      CredentialSealer.sealMcpServers(
+        jsonEncode(servers.map((e) => e.toJson()).toList()),
+      ),
     );
   }
 
@@ -1089,6 +1101,26 @@ class McpProvider extends ChangeNotifier {
           .toList();
       final next = List<McpServerConfig>.of(_servers)
         ..[idx] = server.copyWith(tools: tools);
+      await _persistServers(next);
+      _servers = next;
+      _notify();
+    });
+  }
+
+  /// C1 epoch reset: revoke standing approvals — every cached tool on
+  /// every server requires user approval again. Called when the Owner
+  /// assistant changes so a new owner never inherits approval-free grants.
+  Future<void> resetToolApprovals() async {
+    await _serializeServerMutation(() async {
+      final next = _servers
+          .map(
+            (s) => s.copyWith(
+              tools: s.tools
+                  .map((t) => t.copyWith(needsApproval: true))
+                  .toList(),
+            ),
+          )
+          .toList();
       await _persistServers(next);
       _servers = next;
       _notify();

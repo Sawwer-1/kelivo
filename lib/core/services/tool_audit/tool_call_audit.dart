@@ -46,7 +46,7 @@ final class ToolCallAudit {
       if (conversationId != null) 'conversationId': conversationId,
       'status': status,
       'elapsedMs': elapsedMs,
-      'args': _truncateText(jsonEncode(arguments), 400),
+      'args': _truncateText(jsonEncode(_redactArgs(arguments)), 400),
       if (error != null) 'error': _truncateText(error, 400),
     });
     // Serialized write chain: no interleaved appends, audit order == call order.
@@ -111,4 +111,37 @@ final class ToolCallAudit {
 
   static String _truncateText(String text, int limit) =>
       text.length <= limit ? text : '${text.substring(0, limit)}…';
+
+  /// Key names whose values must never reach the audit file in plaintext.
+  static final RegExp _redactKeyName = RegExp(
+    r'(key|token|secret|auth|password)',
+    caseSensitive: false,
+  );
+
+  /// Recursive redaction for tool arguments: values under credential-ish
+  /// key names become `***` before anything is serialized to disk.
+  static Map<String, dynamic> _redactArgs(Map<String, dynamic> args) {
+    var changed = false;
+    final out = <String, dynamic>{};
+    args.forEach((key, value) {
+      final redactedValue = _redactValue(value);
+      if (!identical(redactedValue, value) && redactedValue != value) {
+        changed = true;
+      }
+      out[key] = _redactKeyName.hasMatch(key)
+          ? (value is String && value.isNotEmpty ? '***' : redactedValue)
+          : redactedValue;
+    });
+    return changed ? out : args;
+  }
+
+  static dynamic _redactValue(dynamic value) {
+    if (value is Map) {
+      return _redactArgs(Map<String, dynamic>.from(value));
+    }
+    if (value is List) {
+      return [for (final item in value) _redactValue(item)];
+    }
+    return value;
+  }
 }

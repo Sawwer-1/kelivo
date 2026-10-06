@@ -301,6 +301,8 @@ class MessageGenerationService {
       conversationId: currentConversation?.id,
       workspaceContext: workspaceContext,
     );
+    // AAA B2: promoted lessons from the learning gateway (file bridge).
+    messageBuilderService.injectLearnedPolicy(apiMessages);
 
     messageBuilderService.applyContextLimit(apiMessages, assistant);
 

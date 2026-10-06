@@ -618,6 +618,18 @@ class _DesktopAssistantCardState extends State<_DesktopAssistantCard> {
                                 );
                                 return;
                               }
+                              // C1: the Owner assistant cannot be deleted.
+                              if (context
+                                      .read<SettingsProvider>()
+                                      .ownerAssistantId ==
+                                  widget.item.id) {
+                                showAppSnackBar(
+                                  context,
+                                  message: l10n.ownerAssistantDeleteBlocked,
+                                  type: NotificationType.warning,
+                                );
+                                return;
+                              }
                               final ok = await _confirmDeleteDesktop(context);
                               if (ok == true) {
                                 if (!context.mounted) return;

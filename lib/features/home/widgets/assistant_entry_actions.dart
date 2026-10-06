@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/assistant.dart';
 import '../../../core/providers/assistant_provider.dart';
+import '../../../core/providers/settings_provider.dart';
 import '../controllers/chat_actions.dart';
 import '../../../core/providers/tag_provider.dart';
 import '../../../desktop/desktop_context_menu.dart';
@@ -268,6 +269,15 @@ class AssistantEntryActions {
     Assistant assistant,
   ) async {
     final l10n = AppLocalizations.of(context)!;
+    // C1: the Owner assistant carries fixed identity and cannot be deleted.
+    if (context.read<SettingsProvider>().ownerAssistantId == assistant.id) {
+      showAppSnackBar(
+        context,
+        message: l10n.ownerAssistantDeleteBlocked,
+        type: NotificationType.warning,
+      );
+      return;
+    }
     final assistantProvider = context.read<AssistantProvider>();
     final tagProvider = context.read<TagProvider>();
     final confirmed = await showDialog<bool>(

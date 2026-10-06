@@ -7,6 +7,9 @@ import 'package:math_expressions/math_expressions.dart';
 
 import '../../../core/models/assistant.dart';
 import '../../../core/models/health_data_type.dart';
+import '../../../core/providers/assistant_provider.dart';
+import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/chat/chat_service.dart';
 
 typedef TextToSpeechStarter = Future<void> Function(String text);
 
@@ -29,6 +32,14 @@ class LocalToolNames {
   static const String remindersCreate = 'reminders_create';
   static const String remindersComplete = 'reminders_complete';
 
+  // C3 phase 1: read-only Owner tools. They expose the user's own data
+  // (conversations / assistants / provider configs) and are therefore
+  // always approval-gated; api keys are never returned.
+  static const String ownerListConversations = 'owner_list_conversations';
+  static const String ownerReadConversation = 'owner_read_conversation';
+  static const String ownerListAssistants = 'owner_list_assistants';
+  static const String ownerListProviders = 'owner_list_providers';
+
   static const List<String> all = [
     timeInfo,
     clipboard,
@@ -45,13 +56,36 @@ class LocalToolNames {
     remindersQuery,
     remindersCreate,
     remindersComplete,
+    ownerListConversations,
+    ownerReadConversation,
+    ownerListAssistants,
+    ownerListProviders,
   ];
 
   static const List<String> requiresUserApproval = [
     calendarCreate,
     remindersCreate,
     remindersComplete,
+    ownerListConversations,
+    ownerReadConversation,
+    ownerListAssistants,
+    ownerListProviders,
   ];
+}
+
+/// Read-only data sources for the owner_* local tools (C3 phase 1). Passed
+/// in per call so [LocalToolsService] stays decoupled from providers it
+/// does not otherwise need.
+class OwnerToolContext {
+  const OwnerToolContext({
+    this.chatService,
+    this.assistantProvider,
+    this.settings,
+  });
+
+  final ChatService? chatService;
+  final AssistantProvider? assistantProvider;
+  final SettingsProvider? settings;
 }
 
 class PhoneControlStatus {
@@ -465,6 +499,14 @@ class LocalToolsService {
         return _remindersCreateDefinition();
       case LocalToolNames.remindersComplete:
         return _remindersCompleteDefinition;
+      case LocalToolNames.ownerListConversations:
+        return _ownerListConversationsDefinition;
+      case LocalToolNames.ownerReadConversation:
+        return _ownerReadConversationDefinition;
+      case LocalToolNames.ownerListAssistants:
+        return _ownerListAssistantsDefinition;
+      case LocalToolNames.ownerListProviders:
+        return _ownerListProvidersDefinition;
       default:
         throw ArgumentError.value(name, 'name', 'Unknown local tool');
     }
@@ -507,6 +549,7 @@ class LocalToolsService {
     Map<String, dynamic> args,
     Assistant? assistant, {
     TextToSpeechStarter? onSpeakText,
+    OwnerToolContext? ownerContext,
   }) async {
     if (assistant == null || !assistant.localToolIds.contains(name)) {
       return null;
@@ -516,6 +559,18 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.clipboard) {
       return _handleClipboardTool(args);
+    }
+    if (name == LocalToolNames.ownerListConversations) {
+      return _handleOwnerListConversations(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerReadConversation) {
+      return _handleOwnerReadConversation(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerListAssistants) {
+      return _handleOwnerListAssistants(ownerContext);
+    }
+    if (name == LocalToolNames.ownerListProviders) {
+      return _handleOwnerListProviders(ownerContext);
     }
     if (name == LocalToolNames.textToSpeech) {
       return _handleTextToSpeechTool(args, onSpeakText);
@@ -585,6 +640,198 @@ class LocalToolsService {
     }
     return null;
   }
+
+  // ---------------------------------------------------------------------------
+  // Owner read-only tools (C3 phase 1)
+
+  static String _ownerUnavailable() => jsonEncode({
+    'error': 'owner_context_unavailable',
+    'message': 'Owner data sources are not wired for this call site.',
+  });
+
+  static Future<String> _handleOwnerListConversations(
+    Map<String, dynamic> args,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final chat = ownerContext?.chatService;
+    if (chat == null) return _ownerUnavailable();
+    final rawLimit = args['limit'];
+    var limit = rawLimit is int ? rawLimit : int.tryParse('$rawLimit') ?? 20;
+    limit = limit.clamp(1, 100);
+    final conversations = chat.getAllCompleteConversations()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    final rows = [
+      for (final c in conversations.take(limit))
+        {
+          'id': c.id,
+          'title': c.title,
+          'assistant_id': c.assistantId,
+          'is_pinned': c.isPinned,
+          'created_at': c.createdAt.toIso8601String(),
+          'updated_at': c.updatedAt.toIso8601String(),
+          'message_count': c.messageIds.length,
+        },
+    ];
+    return jsonEncode({
+      'total': conversations.length,
+      'returned': rows.length,
+      'conversations': rows,
+    });
+  }
+
+  static Future<String> _handleOwnerReadConversation(
+    Map<String, dynamic> args,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final chat = ownerContext?.chatService;
+    if (chat == null) return _ownerUnavailable();
+    final conversationId = '${args['conversation_id'] ?? ''}'.trim();
+    if (conversationId.isEmpty) {
+      return jsonEncode({
+        'error': 'missing_argument',
+        'message': 'conversation_id is required.',
+      });
+    }
+    final conversation = chat.getConversation(conversationId);
+    if (conversation == null) {
+      return jsonEncode({
+        'error': 'not_found',
+        'message': 'Unknown conversation_id: $conversationId',
+      });
+    }
+    final rawLimit = args['limit'];
+    var limit = rawLimit is int ? rawLimit : int.tryParse('$rawLimit') ?? 50;
+    limit = limit.clamp(1, 200);
+    final messages = await chat.loadActiveTimelineMessages(conversationId);
+    // Newest last; take the most recent `limit` after the cut.
+    final start = messages.length > limit ? messages.length - limit : 0;
+    final rows = [
+      for (final m in messages.sublist(start))
+        {
+          'role': m.role,
+          'content': m.content.length > 2000
+              ? '${m.content.substring(0, 2000)}…[truncated]'
+              : m.content,
+          'timestamp': m.timestamp.toIso8601String(),
+        },
+    ];
+    return jsonEncode({
+      'id': conversation.id,
+      'title': conversation.title,
+      'total_messages': messages.length,
+      'returned': rows.length,
+      'messages': rows,
+    });
+  }
+
+  static Future<String> _handleOwnerListAssistants(
+    OwnerToolContext? ownerContext,
+  ) async {
+    final provider = ownerContext?.assistantProvider;
+    if (provider == null) return _ownerUnavailable();
+    return jsonEncode({
+      'assistants': [
+        for (final a in provider.assistants) {'id': a.id, 'name': a.name},
+      ],
+    });
+  }
+
+  static Future<String> _handleOwnerListProviders(
+    OwnerToolContext? ownerContext,
+  ) async {
+    final settings = ownerContext?.settings;
+    if (settings == null) return _ownerUnavailable();
+    return jsonEncode({
+      // API keys are intentionally never included (C3 phase 1 is read-only
+      // and least-privileged).
+      'providers': [
+        for (final cfg in settings.providerConfigs.values)
+          {
+            'id': cfg.id,
+            'name': cfg.name,
+            'enabled': cfg.enabled,
+            'base_url': cfg.baseUrl,
+            'models': List<String>.from(cfg.models),
+          },
+      ],
+    });
+  }
+
+  static const Map<String, dynamic> _ownerListConversationsDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerListConversations,
+      'description':
+          'List the user\'s conversations (metadata only: id, title, '
+          'assistant, pinned flag, timestamps, message count). Read-only; '
+          'every call requires user approval. Use owner_read_conversation '
+          'to read the messages of one conversation.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'limit': {
+            'type': 'integer',
+            'minimum': 1,
+            'maximum': 100,
+            'description':
+                'Max conversations to return (default 20, newest first).',
+          },
+        },
+        'additionalProperties': false,
+      },
+    },
+  };
+
+  static const Map<String, dynamic> _ownerReadConversationDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerReadConversation,
+      'description':
+          'Read the messages of one conversation (role and text content, '
+          'newest last, long texts truncated). Read-only; every call '
+          'requires user approval.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'conversation_id': {
+            'type': 'string',
+            'description': 'From owner_list_conversations.',
+          },
+          'limit': {
+            'type': 'integer',
+            'minimum': 1,
+            'maximum': 200,
+            'description': 'Max messages to return (default 50).',
+          },
+        },
+        'required': ['conversation_id'],
+        'additionalProperties': false,
+      },
+    },
+  };
+
+  static const Map<String, dynamic> _ownerListAssistantsDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerListAssistants,
+      'description':
+          'List the configured assistants (id and name only). Read-only; '
+          'every call requires user approval.',
+      'parameters': {'type': 'object', 'properties': <String, dynamic>{}},
+    },
+  };
+
+  static const Map<String, dynamic> _ownerListProvidersDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerListProviders,
+      'description':
+          'List the configured model providers (name, base URL, model ids). '
+          'API keys are never included. Read-only; every call requires user '
+          'approval.',
+      'parameters': {'type': 'object', 'properties': <String, dynamic>{}},
+    },
+  };
 
   static const MethodChannel _deviceToolsChannel = DeviceLocalTools._channel;
 

@@ -183,6 +183,8 @@ class _DisplaySettingsBody extends StatelessWidget {
                   _ToggleRowToolAudit(),
                   _RowDivider(),
                   _ToggleRowBypassLearning(),
+                  _RowDivider(),
+                  _ToggleRowLearningAutoInject(),
                 ],
               ),
             ],
@@ -2973,6 +2975,22 @@ class _ToggleRowBypassLearning extends StatelessWidget {
       value: sp.bypassLearningEnabled,
       onChanged: (v) =>
           context.read<SettingsProvider>().setBypassLearningEnabled(v),
+    );
+  }
+}
+
+class _ToggleRowLearningAutoInject extends StatelessWidget {
+  const _ToggleRowLearningAutoInject();
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sp = context.watch<SettingsProvider>();
+    return _ToggleRow(
+      label: l10n.learningAutoInjectSettingTitle,
+      tip: l10n.learningAutoInjectSettingSubtitle,
+      value: sp.learningAutoInject,
+      onChanged: (v) =>
+          context.read<SettingsProvider>().setLearningAutoInject(v),
     );
   }
 }

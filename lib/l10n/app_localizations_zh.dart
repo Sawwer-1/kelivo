@@ -4030,6 +4030,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get providerDetailPageApiKeyHint => '留空则使用上层默认';
 
   @override
+  String get credentialRevealAuthReason => '验证身份后才能查看密钥';
+
+  @override
   String get providerDetailPageHideTooltip => '隐藏';
 
   @override
@@ -6493,6 +6496,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditLocalToolRemindersCompleteTitle => '完成提醒';
 
   @override
+  String get ownerToolListConversationsTitle => 'Owner：会话列表';
+
+  @override
+  String get ownerToolReadConversationTitle => 'Owner：读取会话';
+
+  @override
+  String get ownerToolListAssistantsTitle => 'Owner：助手列表';
+
+  @override
+  String get ownerToolListProvidersTitle => 'Owner：服务商列表';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       '在你确认后将提醒事项标记为完成，需要授予提醒事项完整访问权限。';
 
@@ -6841,7 +6856,28 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启后每次回复完成，会把该轮对话写入学习网关收件箱（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 摄取为待审经验。默认关闭。';
 
   @override
+  String get learningAutoInjectSettingTitle => '自动注入学习策略';
+
+  @override
+  String get learningAutoInjectSettingSubtitle =>
+      '把学习网关已晋升的经验追加到每轮系统提示词；已验证条目指导行为，未验证条目仅供参考。';
+
+  @override
   String get settingsPageOwnerIdentity => 'Owner 身份';
+
+  @override
+  String get ownerAssistantSettingTitle => 'Owner 助手';
+
+  @override
+  String get ownerAssistantSettingSubtitle =>
+      '该助手承载 Owner 身份，不可删除；更换时会收回工具的免审批授权。';
+
+  @override
+  String get ownerAssistantDropdownNone => '无';
+
+  @override
+  String get ownerAssistantDeleteBlocked =>
+      '这是 Owner 助手，禁止删除；请先在 Owner 身份页更换或清除。';
 
   @override
   String get ownerIdentityPageTitle => 'Owner 身份';
@@ -16306,6 +16342,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get providerDetailPageApiKeyHint => '留空则使用上层默认';
 
   @override
+  String get credentialRevealAuthReason => '验证身份后才能查看密钥';
+
+  @override
   String get providerDetailPageHideTooltip => '隐藏';
 
   @override
@@ -18695,6 +18734,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get assistantEditLocalToolRemindersCompleteTitle => '完成提醒';
 
   @override
+  String get ownerToolListConversationsTitle => 'Owner：会话列表';
+
+  @override
+  String get ownerToolReadConversationTitle => 'Owner：读取会话';
+
+  @override
+  String get ownerToolListAssistantsTitle => 'Owner：助手列表';
+
+  @override
+  String get ownerToolListProvidersTitle => 'Owner：服务商列表';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       '在你确认后将提醒事项标记为完成，需要授予提醒事项完整访问权限。';
 
@@ -19043,7 +19094,28 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
       '开启后每次回复完成，会把该轮对话写入学习网关收件箱（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 摄取为待审经验。默认关闭。';
 
   @override
+  String get learningAutoInjectSettingTitle => '自动注入学习策略';
+
+  @override
+  String get learningAutoInjectSettingSubtitle =>
+      '把学习网关已晋升的经验追加到每轮系统提示词；已验证条目指导行为，未验证条目仅供参考。';
+
+  @override
   String get settingsPageOwnerIdentity => 'Owner 身份';
+
+  @override
+  String get ownerAssistantSettingTitle => 'Owner 助手';
+
+  @override
+  String get ownerAssistantSettingSubtitle =>
+      '该助手承载 Owner 身份，不可删除；更换时会收回工具的免审批授权。';
+
+  @override
+  String get ownerAssistantDropdownNone => '无';
+
+  @override
+  String get ownerAssistantDeleteBlocked =>
+      '这是 Owner 助手，禁止删除；请先在 Owner 身份页更换或清除。';
 
   @override
   String get ownerIdentityPageTitle => 'Owner 身份';
@@ -28488,6 +28560,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get providerDetailPageApiKeyHint => '留空則使用上層預設';
 
   @override
+  String get credentialRevealAuthReason => '驗證身分後才能查看密鑰';
+
+  @override
   String get providerDetailPageHideTooltip => '隱藏';
 
   @override
@@ -30952,6 +31027,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get assistantEditLocalToolRemindersCompleteTitle => '完成提醒';
 
   @override
+  String get ownerToolListConversationsTitle => 'Owner：會話列表';
+
+  @override
+  String get ownerToolReadConversationTitle => 'Owner：讀取會話';
+
+  @override
+  String get ownerToolListAssistantsTitle => 'Owner：助手列表';
+
+  @override
+  String get ownerToolListProvidersTitle => 'Owner：服務商列表';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       '在你確認後將提醒事項標記為完成，需要授予提醒事項完整存取權限。';
 
@@ -31300,7 +31387,28 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
       '開啟後每次回覆完成，會把該輪對話寫入學習閘道收件匣（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 攝取為待審經驗。預設關閉。';
 
   @override
+  String get learningAutoInjectSettingTitle => '自動注入學習策略';
+
+  @override
+  String get learningAutoInjectSettingSubtitle =>
+      '把學習閘道已晉升的經驗追加到每輪系統提示詞；已驗證條目指導行為，未驗證條目僅供參考。';
+
+  @override
   String get settingsPageOwnerIdentity => 'Owner 身分';
+
+  @override
+  String get ownerAssistantSettingTitle => 'Owner 助手';
+
+  @override
+  String get ownerAssistantSettingSubtitle =>
+      '該助手承載 Owner 身分，不可刪除；更換時會收回工具的免審批授權。';
+
+  @override
+  String get ownerAssistantDropdownNone => '無';
+
+  @override
+  String get ownerAssistantDeleteBlocked =>
+      '這是 Owner 助手，禁止刪除；請先在 Owner 身分頁更換或清除。';
 
   @override
   String get ownerIdentityPageTitle => 'Owner 身分';

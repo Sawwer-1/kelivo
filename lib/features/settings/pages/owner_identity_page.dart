@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/providers/assistant_provider.dart';
+import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_switch.dart';
@@ -60,6 +62,8 @@ class _OwnerIdentityContentState extends State<OwnerIdentityContent> {
             onChanged: (v) =>
                 context.read<SettingsProvider>().setOwnerIdentityEnabled(v),
           ),
+          const SizedBox(height: 12),
+          _OwnerAssistantRow(),
           const SizedBox(height: 12),
           Text(
             l10n.ownerIdentityNameTitle,
@@ -120,6 +124,84 @@ class _OwnerIdentityContentState extends State<OwnerIdentityContent> {
               fontSize: 12.5,
               height: 1.5,
               color: cs.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OwnerAssistantRow extends StatelessWidget {
+  const _OwnerAssistantRow();
+
+  static const String _noneSentinel = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
+    final settings = context.watch<SettingsProvider>();
+    final assistants = context.watch<AssistantProvider>().assistants;
+    final owner = settings.ownerAssistantId;
+    final valid = assistants.any((a) => a.id == owner);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.ownerAssistantSettingTitle,
+                  style: TextStyle(fontSize: 15, color: cs.onSurface),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  l10n.ownerAssistantSettingSubtitle,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: valid ? owner : _noneSentinel,
+              isDense: true,
+              items: [
+                DropdownMenuItem<String>(
+                  value: _noneSentinel,
+                  child: Text(
+                    l10n.ownerAssistantDropdownNone,
+                    style: TextStyle(fontSize: 13.5, color: cs.onSurface),
+                  ),
+                ),
+                for (final a in assistants)
+                  DropdownMenuItem<String>(
+                    value: a.id,
+                    child: Text(
+                      a.name,
+                      style: TextStyle(fontSize: 13.5, color: cs.onSurface),
+                    ),
+                  ),
+              ],
+              onChanged: (v) async {
+                // C1 epoch: a new Owner never inherits approval-free grants.
+                await context
+                    .read<SettingsProvider>()
+                    .setOwnerAssistantId((v == null || v.isEmpty) ? null : v);
+                await context.read<McpProvider>().resetToolApprovals();
+              },
             ),
           ),
         ],

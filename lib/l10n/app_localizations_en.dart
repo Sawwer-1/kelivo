@@ -4177,6 +4177,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerDetailPageApiKeyHint => 'Leave empty to use default';
 
   @override
+  String get credentialRevealAuthReason => 'Verify to show the API key';
+
+  @override
   String get providerDetailPageHideTooltip => 'Hide';
 
   @override
@@ -6764,6 +6767,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Complete Reminder';
 
   @override
+  String get ownerToolListConversationsTitle => 'Owner: list conversations';
+
+  @override
+  String get ownerToolReadConversationTitle => 'Owner: read conversation';
+
+  @override
+  String get ownerToolListAssistantsTitle => 'Owner: list assistants';
+
+  @override
+  String get ownerToolListProvidersTitle => 'Owner: list providers';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       'Mark a reminder as done with your confirmation, requires full reminders access.';
 
@@ -7124,7 +7139,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'After each reply finishes, that turn is dropped into the learning gateway inbox (%APPDATA%\\kelivo_learning\\inbox); learning_ingest_inbox distills it into pending lessons. Off by default.';
 
   @override
+  String get learningAutoInjectSettingTitle => 'Auto-inject learned policy';
+
+  @override
+  String get learningAutoInjectSettingSubtitle =>
+      'Append promoted lessons from the learning gateway to every system prompt. Verified entries guide behavior; unverified ones are reference-only.';
+
+  @override
   String get settingsPageOwnerIdentity => 'Owner Identity';
+
+  @override
+  String get ownerAssistantSettingTitle => 'Owner assistant';
+
+  @override
+  String get ownerAssistantSettingSubtitle =>
+      'This assistant carries the Owner identity and cannot be deleted. Switching it revokes standing tool approvals.';
+
+  @override
+  String get ownerAssistantDropdownNone => 'None';
+
+  @override
+  String get ownerAssistantDeleteBlocked =>
+      'This is the Owner assistant. Deletion is blocked — change or clear it in Owner Identity settings first.';
 
   @override
   String get ownerIdentityPageTitle => 'Owner Identity';

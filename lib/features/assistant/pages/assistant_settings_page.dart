@@ -270,6 +270,17 @@ class _AssistantCard extends StatelessWidget {
                 );
                 return;
               }
+              // C1: the Owner assistant carries fixed identity and cannot
+              // be deleted.
+              if (context.read<SettingsProvider>().ownerAssistantId ==
+                  item.id) {
+                showAppSnackBar(
+                  context,
+                  message: l10n.ownerAssistantDeleteBlocked,
+                  type: NotificationType.warning,
+                );
+                return;
+              }
               final ok = await _confirmDelete(context, l10n);
               if (!context.mounted || ok != true) return;
               await ChatActions.cancelActiveGenerationsForAssistant(item.id);

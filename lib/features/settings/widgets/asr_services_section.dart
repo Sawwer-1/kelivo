@@ -10,6 +10,7 @@ import '../../../core/services/asr/asr_service_options.dart';
 import '../../../core/services/asr/sherpa_model_manager.dart';
 import '../../../core/services/asr/system_asr_service.dart';
 import '../../../core/services/haptics.dart';
+import '../../../core/services/key_vault/biometric_gate.dart';
 import '../../../icons/lucide_adapter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/ios_tile_button.dart';
@@ -1859,6 +1860,7 @@ class _EditorFieldState extends State<_EditorField> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     if (widget.desktop) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
@@ -1952,7 +1954,11 @@ class _EditorFieldState extends State<_EditorField> {
               suffixIcon: widget.obscure
                   ? _EditorVisibilityButton(
                       icon: _obscured ? Lucide.Eye : Lucide.EyeOff,
-                      onTap: () => setState(() => _obscured = !_obscured),
+                      onTap: () => BiometricGate.gatedToggle(
+                        revealing: _obscured,
+                        reason: l10n.credentialRevealAuthReason,
+                        toggle: () => setState(() => _obscured = !_obscured),
+                      ),
                     )
                   : null,
             ),

@@ -1859,6 +1859,95 @@ class MessageBuilderService {
     }
   }
 
+  /// Inject promoted lessons from the learning gateway (AAA B2 file
+  /// bridge): the sidecar rewrites promoted_snapshot.json on every
+  /// promote/archive/confirm; we read it at build time. Retrieval-confirmed
+  /// lessons are stated as working policy; unconfirmed ones ship as a
+  /// shadow section for reference only. Windows only (the gateway is a
+  /// desktop sidecar) — silently no-ops elsewhere.
+  void injectLearnedPolicy(List<Map<String, dynamic>> apiMessages) {
+    try {
+      final settings = contextProvider.read<SettingsProvider>();
+      if (!settings.learningAutoInject) return;
+      if (!Platform.isWindows) return;
+      final appData = Platform.environment['APPDATA'];
+      if (appData == null || appData.isEmpty) return;
+      final file = File('$appData\\kelivo_learning\\promoted_snapshot.json');
+      if (!file.existsSync()) return;
+      final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      final rawEntries = data['entries'];
+      if (rawEntries is! List || rawEntries.isEmpty) return;
+      final confirmed = <String>[];
+      final shadow = <String>[];
+      for (final raw in rawEntries) {
+        if (raw is! Map<String, dynamic>) continue;
+        final content = (raw['content'] as String? ?? '').trim();
+        if (content.isEmpty) continue;
+        final type = raw['type'] as String? ?? 'lesson';
+        final tags = (raw['tags'] as List? ?? const [])
+            .map((t) => t.toString())
+            .where((t) => t.isNotEmpty)
+            .join(', ');
+        final line = tags.isEmpty
+            ? '[$type] $content'
+            : '[$type] $content (tags: $tags)';
+        if (raw['retrieval_confirmed'] == true) {
+          confirmed.add(line);
+        } else {
+          shadow.add(line);
+        }
+      }
+      if (confirmed.isEmpty && shadow.isEmpty) return;
+      final lang = settings.resolvedMemoryPromptLang;
+      final buf = StringBuffer();
+      if (lang == MemoryPromptLang.zh) {
+        buf.write(
+          '<learned_policy>\n'
+          '以下是学习网关沉淀的工作经验（主人已复核并晋升）。已验证条目'
+          '按此调整做法；与当前对话的明确指令冲突时，以当前对话为准：',
+        );
+        for (final line in confirmed) {
+          buf.write('\n- $line');
+        }
+        if (shadow.isNotEmpty) {
+          buf.write('\n以下条目尚未经检索验证，仅供参考，不要据此改变行为：');
+          for (final line in shadow) {
+            buf.write('\n- $line');
+          }
+        }
+        buf.write('\n</learned_policy>');
+      } else {
+        buf.write(
+          '<learned_policy>\n'
+          'Working lessons distilled by the learning gateway (reviewed and '
+          'promoted by the owner). Follow the verified entries; when they '
+          'conflict with explicit instructions in the current conversation, '
+          'the conversation wins:',
+        );
+        for (final line in confirmed) {
+          buf.write('\n- $line');
+        }
+        if (shadow.isNotEmpty) {
+          buf.write(
+            "\nThe entries below are not retrieval-verified yet; treat them "
+            'as reference only and do not act on them:',
+          );
+          for (final line in shadow) {
+            buf.write('\n- $line');
+          }
+        }
+        buf.write('\n</learned_policy>');
+      }
+      _appendToSystemMessage(
+        apiMessages,
+        buf.toString(),
+        source: ContextSource.systemPrompt,
+      );
+    } catch (_) {
+      // Learned-policy injection must never break message building.
+    }
+  }
+
   /// Inject §11 memory rules into the system message.
   ///
   /// Pure function of `(enableMemory, allowPastConversationRecall, lang,
