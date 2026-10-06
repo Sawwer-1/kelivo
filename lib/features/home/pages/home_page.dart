@@ -1446,6 +1446,8 @@ class _HomePageState extends State<HomePage>
       onRegenerateMessage: (message) =>
           _controller.regenerateAtMessage(message),
       onResendMessage: (message) => _controller.regenerateAtMessage(message),
+      onContinueMessage: (message) =>
+          _controller.continueGenerationAtMessage(message),
       onTranslateMessage: (message) => _controller.translateMessage(message),
       onEditMessage: (message) => _controller.editMessage(message),
       onDeleteMessage: (message, byGroup) =>
@@ -1583,7 +1585,8 @@ class _HomePageState extends State<HomePage>
         final result = await _controller.sendMessage(text);
         if (!mounted) return result;
         if (PlatformUtils.isMobile &&
-            result == ChatInputSubmissionResult.sent) {
+            (result == ChatInputSubmissionResult.sent ||
+                result == ChatInputSubmissionResult.steered)) {
           _controller.dismissKeyboard();
         }
         return result;

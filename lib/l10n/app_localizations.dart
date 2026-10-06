@@ -4540,6 +4540,12 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get messageMoreSheetEdit;
 
+  /// No description provided for @messageMoreSheetContinueGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue generation'**
+  String get messageMoreSheetContinueGeneration;
+
   /// No description provided for @messageMoreSheetShare.
   ///
   /// In en, this message translates to:

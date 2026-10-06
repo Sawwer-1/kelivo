@@ -253,6 +253,7 @@ Stream<StreamChunk> sendGoogleGeminiStream(
   bool stream = true,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) {
   final cfg = config.copyWith(vertexAI: false);
   return sendGoogleStream(
@@ -272,6 +273,7 @@ Stream<StreamChunk> sendGoogleGeminiStream(
     stream: stream,
     skipImageParsing: skipImageParsing,
     retryRound: retryRound,
+    takeSteering: takeSteering,
   );
 }
 

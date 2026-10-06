@@ -222,6 +222,7 @@ Stream<StreamChunk> runOpenAIResponsesToolFollowUps({
   required int approxCompletionChars,
   bool stream = true,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   var usage = initialUsage;
   var chars = approxCompletionChars;
@@ -254,6 +255,20 @@ Stream<StreamChunk> runOpenAIResponsesToolFollowUps({
             )).responsesOutput,
           },
       ];
+      // D1 Steering: deliver mid-generation user text before the next round.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          currentInput = [
+            ...currentInput,
+            {
+              'role': 'user',
+              'content': [
+                {'type': 'text', 'text': text},
+              ],
+            },
+          ];
+        }
+      }
     },
     sendFollowUp: () async* {
       usage = const TokenUsage();

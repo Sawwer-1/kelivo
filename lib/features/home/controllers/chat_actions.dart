@@ -18,6 +18,7 @@ import '../../../core/models/reasoning_request.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/services/api/reasoning/reasoning_selection.dart';
 import '../../../core/services/api/retry_policy.dart';
+import '../../../core/services/api/steering_queue.dart';
 import '../../../core/services/api/stream/stream_chunk.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/mobile_background.dart';
@@ -300,6 +301,11 @@ class ChatActions {
   /// Called when file processing finishes. A null [messageId] clears whichever
   /// message currently owns the indicator (error/cancel cleanup paths).
   void Function(String? messageId)? onFileProcessingFinished;
+
+  /// Called when a generation ends with steering texts that never reached a
+  /// tool round (D1). HomeViewModel forwards them to the queued-input flow so
+  /// they are persisted and answered through the normal send path.
+  void Function(String conversationId, List<String> texts)? onLeftoverSteering;
 
   // ============================================================================
   // Private Helpers
@@ -652,6 +658,9 @@ class ChatActions {
         onMessagesChanged?.call();
       }
       _setConversationLoading(conversationId, false);
+      // D1: a preparation failure never reached a tool round either; hand
+      // any queued steering to the follow-up flow like the stream paths do.
+      _flushLeftoverSteering(conversationId);
     }
   }
 
@@ -1384,6 +1393,7 @@ class ChatActions {
         scheduledPreview: scheduledPreview,
         generateTitleOnFinish: true,
         generationRunId: generationRunId,
+        takeSteering: _steeringDrainFor(conversation.id),
       );
 
       if (!_activeAssistantMessages.isActive(assistantMessage)) {
@@ -1428,6 +1438,70 @@ class ChatActions {
     }
     if (action != PrepareErrorAction.failed) return;
     onStreamError?.call(error.toString());
+  }
+
+  // ============================================================================
+  // Steering (D1: mid-generation user instructions)
+  // ============================================================================
+
+  /// Builds the drain callback handed to the provider tool loop. Each drained
+  /// text is persisted as a user message and rendered before the model sees
+  /// it, so the transcript and the request context stay in sync.
+  List<String> Function()? _steeringDrainFor(String conversationId) {
+    return () {
+      final texts = SteeringService.instance.drain(conversationId);
+      if (texts.isEmpty) return const <String>[];
+      _persistSteeringTexts(conversationId, texts);
+      return texts;
+    };
+  }
+
+  /// Persist and render steering texts at injection time. Failures are logged
+  /// and swallowed: the texts are already on their way to the model, and a
+  /// persistence hiccup must not abort a running generation.
+  Future<void> _persistSteeringTexts(
+    String conversationId,
+    List<String> texts,
+  ) async {
+    try {
+      final conversation = chatService.getConversation(conversationId);
+      final assistantId = conversation?.assistantId;
+      final assistant = assistantId == null
+          ? null
+          : contextProvider.read<AssistantProvider>().getById(assistantId);
+      for (final text in texts) {
+        final message = await messageGenerationService.createUserMessage(
+          conversationId: conversationId,
+          input: ChatInputData(text: text),
+          assistant: assistant,
+        );
+        if (chatController.currentConversation?.id == conversationId &&
+            await chatController.appendPersistedTailMessages([message])) {
+          viewModel.restoreMessageUiState();
+        }
+        onMessagesChanged?.call();
+      }
+    } catch (e) {
+      FlutterLogger.log(
+        '[ChatActions] steering persist failed: $e',
+        tag: 'ChatActions',
+      );
+    }
+  }
+
+  /// Drain steering that outlived its generation (no tool round happened
+  /// after it was enqueued) and hand it to the queued-input flow.
+  void _flushLeftoverSteering(String conversationId) {
+    final texts = SteeringService.instance.drain(conversationId);
+    if (texts.isEmpty) return;
+    try {
+      onLeftoverSteering?.call(conversationId, texts);
+    } catch (e) {
+      FlutterLogger.log(
+        '[ChatActions] leftover steering handoff failed: $e',
+        tag: 'ChatActions',
+      );
+    }
   }
 
   void _bindFileProcessingCallbacks() {
@@ -1775,6 +1849,7 @@ class ChatActions {
           scheduledPreview: scheduledPreview,
           generateTitleOnFinish: false,
           generationRunId: begin.runId,
+          takeSteering: _steeringDrainFor(conversation.id),
         );
 
         if (!_activeAssistantMessages.isActive(assistantMessage)) {
@@ -1931,6 +2006,7 @@ class ChatActions {
         supportsReasoning: supportsReasoning,
         enableReasoning: enableReasoning,
         generateTitleOnFinish: false,
+        takeSteering: _steeringDrainFor(conversation.id),
       );
 
       if (!_activeAssistantMessages.isActive(streamingMessage)) {
@@ -2112,6 +2188,10 @@ class ChatActions {
     } else {
       chatController.publishGenerationState(cid, isGenerating: false);
     }
+    // D1: cancel behaves like the queued-input flow on cancel — texts typed
+    // mid-generation are handed to the queued-input path so the user sees
+    // them answered by a fresh send instead of silently disappearing.
+    _flushLeftoverSteering(cid);
   }
 
   // ============================================================================
@@ -2743,6 +2823,9 @@ class ChatActions {
       // once more after isGenerating becomes false so layout-phase follow
       // does not miss that height change.
       onStreamFinished?.call(conversationId);
+      // D1: steering enqueued during this generation but never drained by a
+      // tool round goes to the queued-input flow as a follow-up send.
+      _flushLeftoverSteering(conversationId);
     }
   }
 
@@ -2824,6 +2907,9 @@ class ChatActions {
       _conversationStreams.remove(conversationId);
       if (!oauthFailure) onStreamError?.call(errorText);
       onStreamFinished?.call(conversationId);
+      // D1: same leftover handoff as the success path — a failed generation
+      // must not silently drop mid-generation instructions either.
+      _flushLeftoverSteering(conversationId);
     }
   }
 

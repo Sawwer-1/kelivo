@@ -24,7 +24,13 @@ class ChatInputData {
   });
 }
 
-enum ChatInputSubmissionResult { sent, queued, rejected }
+/// Result of a composer submission.
+///
+/// [steered] means the text was accepted as a D1 steering instruction: it
+/// will be delivered to the running generation's tool loop between rounds.
+/// Consumers must treat it like [sent] (clear the composer); optional UI can
+/// additionally show a "delivered mid-generation" hint.
+enum ChatInputSubmissionResult { sent, steered, queued, rejected }
 
 class QueuedChatInput {
   final String conversationId;

@@ -282,6 +282,9 @@ class ChatApiService {
     AutoRetryOptions? retryOverride,
     int? tokenBudgetSoftCap,
     int? tokenBudgetHardCap,
+    // D1 Steering: drained by the tool loop between rounds; each returned
+    // text must be persisted/rendered by the callback owner before returning.
+    List<String> Function()? takeSteering,
   }) async* {
     final sessionToken = CancelToken();
     final toolCancellation = ToolCallCancellation(
@@ -414,6 +417,7 @@ class ChatApiService {
             useZhipuLayoutParsing: useZhipuLayoutParsing,
             sessionToken: sessionToken,
             retryRound: retryRound,
+            takeSteering: textOnly ? null : takeSteering,
           ),
         ),
       );
@@ -482,6 +486,7 @@ class ChatApiService {
     required bool useZhipuLayoutParsing,
     required CancelToken sessionToken,
     required StreamRoundRunner retryRound,
+    List<String> Function()? takeSteering,
   }) async* {
     if (sessionToken.isCancelled) {
       throw http.ClientException('cancelled');
@@ -533,6 +538,7 @@ class ChatApiService {
             builtInSearchOnly: builtInSearchOnly,
             skipImageParsing: skipImageParsing,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
         } else {
           yield* sendOpenAIChatCompletionsStream(
@@ -554,6 +560,7 @@ class ChatApiService {
             builtInSearchOnly: builtInSearchOnly,
             skipImageParsing: skipImageParsing,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
         }
       } else if (kind == ProviderKind.claude) {
@@ -575,6 +582,7 @@ class ChatApiService {
           builtInSearchOnly: builtInSearchOnly,
           skipImageParsing: skipImageParsing,
           retryRound: retryRound,
+          takeSteering: takeSteering,
         );
       } else if (kind == ProviderKind.google) {
         final isVertex = config.vertexAI == true;
@@ -598,6 +606,7 @@ class ChatApiService {
             stream: stream,
             skipImageParsing: skipImageParsing,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
         } else if (isVertex) {
           yield* sendGoogleVertexStream(
@@ -617,6 +626,7 @@ class ChatApiService {
             stream: stream,
             skipImageParsing: skipImageParsing,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
         } else {
           yield* sendGoogleGeminiStream(
@@ -636,6 +646,7 @@ class ChatApiService {
             stream: stream,
             skipImageParsing: skipImageParsing,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
         }
       }

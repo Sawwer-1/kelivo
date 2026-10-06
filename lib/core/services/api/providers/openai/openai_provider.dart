@@ -123,6 +123,7 @@ Stream<StreamChunk> sendOpenAIStream(
   bool builtInSearchOnly = false,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   final upstreamModelId = apiModelId(config, modelId);
   final cacheKey = conversationId?.trim() ?? '';
@@ -792,6 +793,7 @@ Stream<StreamChunk> sendOpenAIStream(
             approxCompletionChars: outText.length,
             stream: false,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
           return;
         }
@@ -847,6 +849,7 @@ Stream<StreamChunk> sendOpenAIStream(
           extraHeaders: extraHeaders,
           initialUsage: firstUsage,
           retryRound: retryRound,
+          takeSteering: takeSteering,
         );
         return;
       }
@@ -1039,6 +1042,7 @@ Stream<StreamChunk> sendOpenAIStream(
             approxPromptTokens: approxPromptTokens,
             approxCompletionChars: approxCompletionChars,
             retryRound: retryRound,
+            takeSteering: takeSteering,
           );
           return;
         }
@@ -1129,6 +1133,7 @@ Stream<StreamChunk> sendOpenAIStream(
       approxCompletionChars: approxCompletionChars,
       includeReasoningDetailsOnDone: true,
       retryRound: retryRound,
+      takeSteering: takeSteering,
     );
     return;
   }

@@ -286,6 +286,7 @@ Stream<StreamChunk> sendGoogleStream(
   bool stream = true,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   // Check for Vertex AI Claude models (prefix "claude-")
   // If it's a Claude model on Vertex, route to special handling
@@ -308,6 +309,7 @@ Stream<StreamChunk> sendGoogleStream(
       stream: stream,
       skipImageParsing: skipImageParsing,
       retryRound: retryRound,
+      takeSteering: takeSteering,
     );
     return;
   }
@@ -802,6 +804,21 @@ Stream<StreamChunk> sendGoogleStream(
             ],
           },
         ];
+        // D1 Steering: deliver mid-generation user text before the next
+        // round (Gemini user turn = text parts).
+        if (takeSteering != null) {
+          for (final text in takeSteering()) {
+            currentContents = [
+              ...currentContents,
+              {
+                'role': 'user',
+                'parts': [
+                  {'text': text},
+                ],
+              },
+            ];
+          }
+        }
       },
       finish: () => emitDone(
         ids: StreamChunkIds('finish'),
@@ -1403,6 +1420,18 @@ Stream<StreamChunk> sendGoogleStream(
           responseParts.addAll(result.googleImageParts);
         }
         convo.add({'role': 'user', 'parts': responseParts});
+        // D1 Steering: deliver mid-generation user text before the next
+        // round (mixed built-in + function tools path).
+        if (takeSteering != null) {
+          for (final text in takeSteering()) {
+            convo.add({
+              'role': 'user',
+              'parts': [
+                {'text': text},
+              ],
+            });
+          }
+        }
         return;
       }
       for (final c in lastRoundCalls) {
@@ -1446,6 +1475,17 @@ Stream<StreamChunk> sendGoogleStream(
             ...result.googleImageParts,
           ],
         });
+      }
+      // D1 Steering: deliver mid-generation user text before the next round.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          convo.add({
+            'role': 'user',
+            'parts': [
+              {'text': text},
+            ],
+          });
+        }
       }
     },
     finish: () => emitDone(

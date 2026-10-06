@@ -52,6 +52,7 @@ Stream<StreamChunk> sendClaudeStream(
   bool builtInSearchOnly = false,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   final upstreamModelId = apiModelId(config, modelId);
   // Endpoint and headers (constant across rounds)
@@ -689,6 +690,15 @@ Stream<StreamChunk> sendClaudeStream(
         {'role': 'assistant', 'content': lastAssistantBlocks},
         {'role': 'user', 'content': results},
       ];
+      // D1 Steering: deliver mid-generation user text before the next round.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          convo = [
+            ...convo,
+            {'role': 'user', 'content': text},
+          ];
+        }
+      }
     },
     finish: () async* {
       yield* emitDone(

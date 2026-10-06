@@ -1173,6 +1173,20 @@ class HomePageController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// D2: continue a failed/interrupted assistant message from its existing
+  /// history — the error text is rewritten and tool events stay in context,
+  /// so a long tool task resumes from where it stopped instead of restarting.
+  Future<bool> continueGenerationAtMessage(ChatMessage message) async {
+    final conversation = currentConversation;
+    if (conversation == null) return false;
+    final result = await _viewModel.continueAssistantMessageAfterToolAnswer(
+      message,
+      allowImagesApiRouting: _mediaController.allowImagesApiRouting,
+    );
+    if (result) notifyListeners();
+    return result;
+  }
+
   // ============================================================================
   // Public Methods - Conversation Management
   // ============================================================================

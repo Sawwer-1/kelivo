@@ -2341,6 +2341,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get messageMoreSheetEdit => '编辑';
 
   @override
+  String get messageMoreSheetContinueGeneration => '继续生成';
+
+  @override
   String get messageMoreSheetShare => '分享';
 
   @override
@@ -14653,6 +14656,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get messageMoreSheetEdit => '编辑';
 
   @override
+  String get messageMoreSheetContinueGeneration => '继续生成';
+
+  @override
   String get messageMoreSheetShare => '分享';
 
   @override
@@ -26869,6 +26875,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get messageMoreSheetEdit => '編輯';
+
+  @override
+  String get messageMoreSheetContinueGeneration => '繼續生成';
 
   @override
   String get messageMoreSheetShare => '分享';

@@ -14,6 +14,7 @@ import '../../../core/models/conversation.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/api/chat_api_service.dart';
+import '../../../core/services/api/steering_queue.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/logging/flutter_logger.dart';
 import '../../../core/services/model_spec/model_spec_resolver.dart';
@@ -137,6 +138,21 @@ class HomeViewModel extends ChangeNotifier {
     _chatActions.onAssistantMessageFinished = _onAssistantMessageFinished;
     _chatActions.onFileProcessingStarted = _onFileProcessingStarted;
     _chatActions.onFileProcessingFinished = _onFileProcessingFinished;
+    _chatActions.onLeftoverSteering = _onLeftoverSteering;
+  }
+
+  /// D1: steering enqueued during a generation that never reached another
+  /// tool round. Hand the texts to the queued-input flow: the generation is
+  /// over by now, so the normal send path persists and answers them.
+  void _onLeftoverSteering(String conversationId, List<String> texts) {
+    if (texts.isEmpty) return;
+    if (_queuedInput == null) {
+      _queuedInput = QueuedChatInput(
+        conversationId: conversationId,
+        input: ChatInputData(text: texts.join('\n\n')),
+      );
+    }
+    unawaited(_drainQueuedInputIfReady(conversationId));
   }
 
   // ============================================================================
@@ -520,6 +536,21 @@ class HomeViewModel extends ChangeNotifier {
 
     final activeConversation = currentConversation!;
     if (_chatController.isConversationLoading(activeConversation.id)) {
+      // D1 Steering: a pure-text submission during a running generation is
+      // delivered to the tool loop between rounds instead of waiting for the
+      // whole generation to end. Persisting and rendering happen at drain
+      // time, so the text is only visible once the model actually receives it.
+      final text = input.text.trim();
+      final steerCandidate =
+          text.isNotEmpty &&
+          input.imagePaths.isEmpty &&
+          input.documents.isEmpty;
+      if (steerCandidate &&
+          _chatActions.activeStreamingMessageId(activeConversation.id) !=
+              null) {
+        SteeringService.instance.enqueue(activeConversation.id, text);
+        return ChatInputSubmissionResult.steered;
+      }
       if (_queuedInput != null) {
         return ChatInputSubmissionResult.rejected;
       }

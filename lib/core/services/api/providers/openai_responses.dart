@@ -29,6 +29,7 @@ Stream<StreamChunk> sendOpenAIResponsesStream(
   bool builtInSearchOnly = false,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) {
   final cfg = config.copyWith(useResponseApi: true);
   return sendOpenAIStream(
@@ -50,5 +51,6 @@ Stream<StreamChunk> sendOpenAIResponsesStream(
     builtInSearchOnly: builtInSearchOnly,
     skipImageParsing: skipImageParsing,
     retryRound: retryRound,
+    takeSteering: takeSteering,
   );
 }

@@ -780,6 +780,7 @@ class MessageGenerationService {
     bool scheduled = false,
     bool scheduledNotify = true,
     bool scheduledPreview = true,
+    List<String> Function()? takeSteering,
   }) {
     final bool ocrActive = settings.ocrActive;
 
@@ -811,6 +812,7 @@ class MessageGenerationService {
       scheduled: scheduled,
       scheduledNotify: scheduledNotify,
       scheduledPreview: scheduledPreview,
+      takeSteering: takeSteering,
     );
   }
 

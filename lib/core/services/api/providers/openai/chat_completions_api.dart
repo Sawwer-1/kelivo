@@ -835,6 +835,7 @@ Stream<StreamChunk> runOpenAIChatCompletionsToolFollowUps({
   required int approxCompletionChars,
   required bool includeReasoningDetailsOnDone,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   var usage = initialUsage;
   var chars = approxCompletionChars;
@@ -866,6 +867,16 @@ Stream<StreamChunk> runOpenAIChatCompletionsToolFollowUps({
         ),
         ...openaiToolResultMessages(executed),
       ];
+      // D1 Steering: after this round's tool results, deliver any user text
+      // enqueued mid-generation as a user message before the next call.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          currentMessages = [
+            ...currentMessages,
+            {'role': 'user', 'content': text},
+          ];
+        }
+      }
     },
     sendFollowUp: () async* {
       usage = const TokenUsage();
@@ -1004,6 +1015,7 @@ Stream<StreamChunk> runOpenAIChatCompletionsNonStreamToolFollowUps({
   required Map<String, String>? extraHeaders,
   required TokenUsage? initialUsage,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   var usage = initialUsage;
   var lastObj = firstObj;
@@ -1036,6 +1048,15 @@ Stream<StreamChunk> runOpenAIChatCompletionsNonStreamToolFollowUps({
         ),
         ...openaiToolResultMessages(executed),
       ];
+      // D1 Steering: deliver mid-generation user text before the next round.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          currentMessages = [
+            ...currentMessages,
+            {'role': 'user', 'content': text},
+          ];
+        }
+      }
     },
     sendFollowUp: () async* {
       usage = const TokenUsage();

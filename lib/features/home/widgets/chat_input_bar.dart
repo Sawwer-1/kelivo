@@ -1333,6 +1333,7 @@ class _ChatInputBarState extends State<ChatInputBar>
           ChatInputSubmissionResult.rejected;
       if (!mounted || submitSerial != _submitSerial) return;
       if (result == ChatInputSubmissionResult.sent ||
+          result == ChatInputSubmissionResult.steered ||
           result == ChatInputSubmissionResult.queued) {
         if (_draftReplacementRevision != submittedDraftRevision) return;
         widget.mediaController?.sharedDraftAction.value = null;

@@ -841,6 +841,7 @@
   "messageMoreSheetRenderWebView": "网页视图渲染",
   "messageMoreSheetNotImplemented": "暂未实现",
   "messageMoreSheetEdit": "编辑",
+  "messageMoreSheetContinueGeneration": "继续生成",
   "messageMoreSheetShare": "分享",
   "messageMoreSheetSelectMessages": "选择消息",
   "messageMoreSheetCreateBranch": "创建分支",

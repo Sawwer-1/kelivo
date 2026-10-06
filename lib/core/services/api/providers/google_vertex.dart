@@ -45,6 +45,7 @@ Stream<StreamChunk> sendGoogleVertexStream(
   bool stream = true,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) {
   final cfg = config.copyWith(vertexAI: true);
   return sendGoogleStream(
@@ -64,6 +65,7 @@ Stream<StreamChunk> sendGoogleVertexStream(
     stream: stream,
     skipImageParsing: skipImageParsing,
     retryRound: retryRound,
+    takeSteering: takeSteering,
   );
 }
 
@@ -155,6 +157,7 @@ Stream<StreamChunk> sendGoogleVertexClaudeStream({
   bool stream = true,
   bool skipImageParsing = false,
   StreamRoundRunner? retryRound,
+  List<String> Function()? takeSteering,
 }) async* {
   final upstreamId = apiModelId(config, modelId);
   final loc = (config.location ?? 'us-central1').trim();
@@ -718,6 +721,15 @@ Stream<StreamChunk> sendGoogleVertexClaudeStream({
         {'role': 'assistant', 'content': lastAssistantBlocks},
         {'role': 'user', 'content': results},
       ];
+      // D1 Steering: deliver mid-generation user text before the next round.
+      if (takeSteering != null) {
+        for (final text in takeSteering()) {
+          convo = [
+            ...convo,
+            {'role': 'user', 'content': text},
+          ];
+        }
+      }
     },
     finish: () => emitDone(
       ids: StreamChunkIds('finish'),

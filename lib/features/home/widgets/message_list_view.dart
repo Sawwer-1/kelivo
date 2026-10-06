@@ -126,6 +126,7 @@ class MessageListView extends StatefulWidget {
     this.onVersionChange,
     this.onRegenerateMessage,
     this.onResendMessage,
+    this.onContinueMessage,
     this.onTranslateMessage,
     this.onEditMessage,
     this.onDeleteMessage,
@@ -219,6 +220,10 @@ class MessageListView extends StatefulWidget {
   final OnVersionChange? onVersionChange;
   final OnRegenerateMessage? onRegenerateMessage;
   final OnResendMessage? onResendMessage;
+
+  /// D2: continue a failed/interrupted assistant message from its existing
+  /// history (tool events kept, error text rewritten by the new round).
+  final OnRegenerateMessage? onContinueMessage;
   final OnTranslateMessage? onTranslateMessage;
   final OnEditMessage? onEditMessage;
   final OnDeleteMessage? onDeleteMessage;
@@ -2414,6 +2419,8 @@ class _MessageListViewState extends State<MessageListView> {
           await widget.onDeleteAllVersions?.call(message, widget.byGroup);
         } else if (action == MessageMoreAction.edit) {
           widget.onEditMessage?.call(message);
+        } else if (action == MessageMoreAction.continueGeneration) {
+          await widget.onContinueMessage?.call(message);
         } else if (action == MessageMoreAction.fork) {
           await widget.onForkConversation?.call(message);
         } else if (action == MessageMoreAction.share) {

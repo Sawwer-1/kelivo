@@ -2424,6 +2424,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messageMoreSheetEdit => 'Edit';
 
   @override
+  String get messageMoreSheetContinueGeneration => 'Continue generation';
+
+  @override
   String get messageMoreSheetShare => 'Share';
 
   @override

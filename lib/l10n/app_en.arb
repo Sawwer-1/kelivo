@@ -1025,6 +1025,7 @@
   "messageMoreSheetRenderWebView": "Render Web View",
   "messageMoreSheetNotImplemented": "Not yet implemented",
   "messageMoreSheetEdit": "Edit",
+  "messageMoreSheetContinueGeneration": "Continue generation",
   "messageMoreSheetShare": "Share",
   "messageMoreSheetSelectMessages": "Select Messages",
   "messageMoreSheetCreateBranch": "Create Branch",

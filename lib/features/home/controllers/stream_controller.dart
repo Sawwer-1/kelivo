@@ -1586,6 +1586,7 @@ class GenerationContext {
     this.scheduled = false,
     this.scheduledNotify = true,
     this.scheduledPreview = true,
+    this.takeSteering,
   });
 
   final ChatMessage assistantMessage;
@@ -1611,6 +1612,11 @@ class GenerationContext {
   final String? generationRunId;
   final bool scheduled;
   final bool scheduledNotify, scheduledPreview;
+
+  /// D1 Steering: drained by the provider tool loop between rounds. The
+  /// closure persists and renders each queued text before returning it, so
+  /// the model and the transcript stay in sync.
+  final List<String> Function()? takeSteering;
 }
 
 /// State object for streaming message generation.
