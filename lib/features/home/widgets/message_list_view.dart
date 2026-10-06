@@ -49,6 +49,7 @@ typedef OnDeleteAllVersions =
       Map<String, List<ChatMessage>> byGroup,
     );
 typedef OnForkConversation = Future<void> Function(ChatMessage message);
+typedef OnContinueMessage = Future<void> Function(ChatMessage message);
 typedef OnShareMessage =
     void Function(int messageIndex, List<ChatMessage> messages);
 typedef OnSelectMessages =
@@ -223,7 +224,7 @@ class MessageListView extends StatefulWidget {
 
   /// D2: continue a failed/interrupted assistant message from its existing
   /// history (tool events kept, error text rewritten by the new round).
-  final OnRegenerateMessage? onContinueMessage;
+  final OnContinueMessage? onContinueMessage;
   final OnTranslateMessage? onTranslateMessage;
   final OnEditMessage? onEditMessage;
   final OnDeleteMessage? onDeleteMessage;
