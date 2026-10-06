@@ -5330,13 +5330,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get displaySettingsPageSendShortcutCtrlEnter => 'Ctrl/Cmd + Enter';
 
   @override
-  String get displaySettingsPageDesktopPetTitle => 'Desktop Pet';
-
-  @override
-  String get displaySettingsPageDesktopPetSubtitle =>
-      'Show a compact always-on-top assistant window; click it to open Kelivo';
-
-  @override
   String get displaySettingsPageAutoSwitchTopicsTitle =>
       'Auto switch to Topics';
 

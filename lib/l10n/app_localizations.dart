@@ -9727,18 +9727,6 @@ abstract class AppLocalizations {
   /// **'Ctrl/Cmd + Enter'**
   String get displaySettingsPageSendShortcutCtrlEnter;
 
-  /// No description provided for @displaySettingsPageDesktopPetTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Desktop Pet'**
-  String get displaySettingsPageDesktopPetTitle;
-
-  /// No description provided for @displaySettingsPageDesktopPetSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Show a compact always-on-top assistant window; click it to open Kelivo'**
-  String get displaySettingsPageDesktopPetSubtitle;
-
   /// No description provided for @displaySettingsPageAutoSwitchTopicsTitle.
   ///
   /// In en, this message translates to:

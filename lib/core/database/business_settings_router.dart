@@ -31,8 +31,6 @@ final class BusinessKeyRegistry {
     'flutter_log_enabled_v1',
     'model_catalog_auto_update_v1',
     'tool_audit_enabled_v1',
-    'pet_enabled_v1',
-    'pet_window_args_v1',
   };
 
   static const discardedKeys = <String>{

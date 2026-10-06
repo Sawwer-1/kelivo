@@ -1850,8 +1850,6 @@
   "displaySettingsPageSendShortcutTitle": "发送快捷键",
   "displaySettingsPageSendShortcutEnter": "Enter",
   "displaySettingsPageSendShortcutCtrlEnter": "Ctrl/Cmd + Enter",
-  "displaySettingsPageDesktopPetTitle": "桌宠",
-  "displaySettingsPageDesktopPetSubtitle": "在桌面常驻一个置顶小窗，点按即可打开 Kelivo",
   "displaySettingsPageAutoSwitchTopicsTitle": "自动切换话题",
   "desktopDisplaySettingsTopicPositionTitle": "话题位置",
   "desktopDisplaySettingsTopicPositionLeft": "左侧",
