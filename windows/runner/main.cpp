@@ -32,6 +32,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // https://github.com/flutter/flutter/issues/175135
   project.set_ui_thread_policy(flutter::UIThreadPolicy::RunOnSeparateThread);
 
+  // Multi-engine + mixed renderers: the main engine (Impeller/GL) and the
+  // desktop_multi_window sub-engine (classic GL) crashed with c0000005 inside
+  // flutter_windows.dll seconds to minutes into a session, only while the
+  // sub-engine was alive. Disabling Impeller on the sub-engine alone delayed
+  // but did not remove the crash, so both engines now run the same classic GL
+  // renderer. Classic GL is the long-stable Windows path; Impeller on Windows
+  // is still new. Revisit when the engine ships a multi-engine Impeller fix.
+  project.set_impeller_switch(flutter::ImpellerSwitch::Disabled);
+
   std::vector<std::string> command_line_arguments =
       GetCommandLineArguments();
 
