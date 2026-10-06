@@ -392,6 +392,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsPageStatistics => 'Statistics';
 
   @override
+  String get doctorPageTitle => 'Diagnostics';
+
+  @override
+  String get doctorRunAll => 'Run all';
+
+  @override
+  String get doctorLastRun => 'Last run';
+
+  @override
+  String get doctorStatusOk => 'OK';
+
+  @override
+  String get doctorStatusWarn => 'Warning';
+
+  @override
+  String get doctorStatusFail => 'Failed';
+
+  @override
+  String get doctorStatusRunning => 'Running';
+
+  @override
+  String get doctorStatusIdle => 'Pending';
+
+  @override
+  String get doctorCheckProviders => 'Provider connectivity';
+
+  @override
+  String get doctorCheckMcp => 'MCP servers';
+
+  @override
+  String get doctorCheckVault => 'Vault (DPAPI)';
+
+  @override
+  String get doctorCheckAudit => 'Audit writing';
+
+  @override
+  String get doctorCheckLearning => 'Learning gateway';
+
+  @override
+  String get doctorCheckAdb => 'adb devices';
+
+  @override
+  String get doctorCheckSnapshot => 'Snapshot freshness';
+
+  @override
   String get settingsPageDocs => 'Docs';
 
   @override

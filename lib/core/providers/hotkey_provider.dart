@@ -34,13 +34,18 @@ class HotkeyProvider extends ChangeNotifier {
       'desktop_hotkeys_commands_v1'; // id -> command
   static const _prefsKeyEnabled = 'desktop_hotkeys_enabled_v1'; // id -> bool
 
+  /// Default global summon hotkey (F1). Shared with the tray menu hint so
+  /// the tray can show the binding before the first settings persist.
+  static const String defaultSummonCommandWinLinux = 'ctrl+alt+k';
+  static const String defaultSummonCommandMac = 'cmd+alt+k';
+
   final Map<String, AppHotkey> _items = {
-    // Toggle app visibility (no default)
+    // Toggle app visibility (system-wide summon; default Ctrl+Alt+K)
     'toggle_app_visibility': AppHotkey(
       id: 'toggle_app_visibility',
       l10nLabelKey: 'hotkeyToggleAppVisibility',
-      defaultWinLinux: '',
-      defaultMac: '',
+      defaultWinLinux: defaultSummonCommandWinLinux,
+      defaultMac: defaultSummonCommandMac,
       enabledByDefault: true,
     ),
     // Close window (in-app scope)

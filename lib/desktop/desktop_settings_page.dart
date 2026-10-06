@@ -31,6 +31,7 @@ import '../features/assistant/pages/assistant_settings_edit_page.dart'
     show showAssistantDesktopDialog; // dialog opener only
 import '../core/providers/assistant_provider.dart';
 import '../features/home/controllers/chat_actions.dart' show ChatActions;
+import 'setting/doctor_pane.dart';
 import '../core/models/assistant.dart';
 import '../utils/avatar_cache.dart';
 import '../utils/sandbox_path_resolver.dart';
@@ -133,6 +134,7 @@ enum _SettingsMenuItem {
   scheduledTasks,
   hotkeys,
   stats,
+  doctor,
   about,
 }
 
@@ -360,6 +362,10 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           );
                         case _SettingsMenuItem.stats:
                           return const DesktopStatsPane(key: ValueKey('stats'));
+                        case _SettingsMenuItem.doctor:
+                          return const DesktopDoctorPane(
+                            key: ValueKey('doctor'),
+                          );
                         case _SettingsMenuItem.about:
                           return const DesktopAboutPane(key: ValueKey('about'));
                       }
@@ -474,6 +480,11 @@ class _SettingsMenu extends StatelessWidget {
         _SettingsMenuItem.toolSchemas,
         lucide.Lucide.Wrench,
         l10n.toolSchemaSettingsPageTitle,
+      ),
+      (
+        _SettingsMenuItem.doctor,
+        lucide.Lucide.HeartPulse,
+        l10n.doctorPageTitle,
       ),
       (
         _SettingsMenuItem.about,

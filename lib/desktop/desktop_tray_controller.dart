@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart'
     show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../core/providers/hotkey_provider.dart';
 import '../core/services/app_exit_flush.dart';
 import '../l10n/app_localizations.dart';
 
@@ -109,7 +111,7 @@ class DesktopTrayController with TrayListener, WindowListener {
       final menu = Menu(
         items: [
           MenuItem(
-            label: l10n.desktopTrayMenuShowWindow,
+            label: await _showWindowLabel(l10n),
             onClick: (_) async => _showWindow(),
           ),
           MenuItem.separator(),
@@ -121,6 +123,36 @@ class DesktopTrayController with TrayListener, WindowListener {
       );
       await trayManager.setContextMenu(menu);
     } catch (_) {}
+  }
+
+  /// "显示窗口 (Ctrl + Alt + K)" — append the configured global summon
+  /// hotkey (F1) so the entry point stays discoverable from the tray.
+  Future<String> _showWindowLabel(AppLocalizations l10n) async {
+    var label = l10n.desktopTrayMenuShowWindow;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final entries =
+          prefs.getStringList('desktop_hotkeys_commands_v1') ?? const [];
+      String? cmd;
+      for (final e in entries) {
+        final idx = e.indexOf('=');
+        if (idx <= 0) continue;
+        if (e.substring(0, idx) == 'toggle_app_visibility') {
+          cmd = e.substring(idx + 1).trim();
+          break;
+        }
+      }
+      // Fresh install: nothing persisted yet — fall back to the default.
+      final isMac = defaultTargetPlatform == TargetPlatform.macOS;
+      cmd ??= isMac
+          ? HotkeyProvider.defaultSummonCommandMac
+          : HotkeyProvider.defaultSummonCommandWinLinux;
+      final formatted = HotkeyProvider.formatCommandForDisplay(cmd);
+      if (formatted.isNotEmpty) {
+        label = '$label ($formatted)';
+      }
+    } catch (_) {}
+    return label;
   }
 
   Future<void> _showWindow() async {

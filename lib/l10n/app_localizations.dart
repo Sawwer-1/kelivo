@@ -778,6 +778,96 @@ abstract class AppLocalizations {
   /// **'Statistics'**
   String get settingsPageStatistics;
 
+  /// No description provided for @doctorPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get doctorPageTitle;
+
+  /// No description provided for @doctorRunAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Run all'**
+  String get doctorRunAll;
+
+  /// No description provided for @doctorLastRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Last run'**
+  String get doctorLastRun;
+
+  /// No description provided for @doctorStatusOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get doctorStatusOk;
+
+  /// No description provided for @doctorStatusWarn.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get doctorStatusWarn;
+
+  /// No description provided for @doctorStatusFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get doctorStatusFail;
+
+  /// No description provided for @doctorStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get doctorStatusRunning;
+
+  /// No description provided for @doctorStatusIdle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get doctorStatusIdle;
+
+  /// No description provided for @doctorCheckProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider connectivity'**
+  String get doctorCheckProviders;
+
+  /// No description provided for @doctorCheckMcp.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP servers'**
+  String get doctorCheckMcp;
+
+  /// No description provided for @doctorCheckVault.
+  ///
+  /// In en, this message translates to:
+  /// **'Vault (DPAPI)'**
+  String get doctorCheckVault;
+
+  /// No description provided for @doctorCheckAudit.
+  ///
+  /// In en, this message translates to:
+  /// **'Audit writing'**
+  String get doctorCheckAudit;
+
+  /// No description provided for @doctorCheckLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning gateway'**
+  String get doctorCheckLearning;
+
+  /// No description provided for @doctorCheckAdb.
+  ///
+  /// In en, this message translates to:
+  /// **'adb devices'**
+  String get doctorCheckAdb;
+
+  /// No description provided for @doctorCheckSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot freshness'**
+  String get doctorCheckSnapshot;
+
   /// No description provided for @settingsPageDocs.
   ///
   /// In en, this message translates to:

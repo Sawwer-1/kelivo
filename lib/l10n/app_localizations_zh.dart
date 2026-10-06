@@ -376,6 +376,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsPageStatistics => '统计';
 
   @override
+  String get doctorPageTitle => '诊断';
+
+  @override
+  String get doctorRunAll => '全部重跑';
+
+  @override
+  String get doctorLastRun => '上次运行';
+
+  @override
+  String get doctorStatusOk => '正常';
+
+  @override
+  String get doctorStatusWarn => '警告';
+
+  @override
+  String get doctorStatusFail => '失败';
+
+  @override
+  String get doctorStatusRunning => '检测中';
+
+  @override
+  String get doctorStatusIdle => '待检';
+
+  @override
+  String get doctorCheckProviders => 'Provider 连通';
+
+  @override
+  String get doctorCheckMcp => 'MCP 服务器';
+
+  @override
+  String get doctorCheckVault => '保险库（DPAPI）';
+
+  @override
+  String get doctorCheckAudit => '审计写盘';
+
+  @override
+  String get doctorCheckLearning => '学习库';
+
+  @override
+  String get doctorCheckAdb => 'adb 设备';
+
+  @override
+  String get doctorCheckSnapshot => '快照时效';
+
+  @override
   String get settingsPageDocs => '使用文档';
 
   @override
@@ -12691,6 +12736,51 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get settingsPageStatistics => '统计';
 
   @override
+  String get doctorPageTitle => '诊断';
+
+  @override
+  String get doctorRunAll => '全部重跑';
+
+  @override
+  String get doctorLastRun => '上次运行';
+
+  @override
+  String get doctorStatusOk => '正常';
+
+  @override
+  String get doctorStatusWarn => '警告';
+
+  @override
+  String get doctorStatusFail => '失败';
+
+  @override
+  String get doctorStatusRunning => '检测中';
+
+  @override
+  String get doctorStatusIdle => '待检';
+
+  @override
+  String get doctorCheckProviders => 'Provider 连通';
+
+  @override
+  String get doctorCheckMcp => 'MCP 服务器';
+
+  @override
+  String get doctorCheckVault => '保险库（DPAPI）';
+
+  @override
+  String get doctorCheckAudit => '审计写盘';
+
+  @override
+  String get doctorCheckLearning => '学习库';
+
+  @override
+  String get doctorCheckAdb => 'adb 设备';
+
+  @override
+  String get doctorCheckSnapshot => '快照时效';
+
+  @override
   String get settingsPageDocs => '使用文档';
 
   @override
@@ -24930,6 +25020,51 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get settingsPageStatistics => '統計';
+
+  @override
+  String get doctorPageTitle => '診斷';
+
+  @override
+  String get doctorRunAll => '全部重跑';
+
+  @override
+  String get doctorLastRun => '上次執行';
+
+  @override
+  String get doctorStatusOk => '正常';
+
+  @override
+  String get doctorStatusWarn => '警告';
+
+  @override
+  String get doctorStatusFail => '失敗';
+
+  @override
+  String get doctorStatusRunning => '檢測中';
+
+  @override
+  String get doctorStatusIdle => '待檢';
+
+  @override
+  String get doctorCheckProviders => 'Provider 連通';
+
+  @override
+  String get doctorCheckMcp => 'MCP 伺服器';
+
+  @override
+  String get doctorCheckVault => '保險庫（DPAPI）';
+
+  @override
+  String get doctorCheckAudit => '審計寫盤';
+
+  @override
+  String get doctorCheckLearning => '學習庫';
+
+  @override
+  String get doctorCheckAdb => 'adb 裝置';
+
+  @override
+  String get doctorCheckSnapshot => '快照時效';
 
   @override
   String get settingsPageDocs => '使用文件';

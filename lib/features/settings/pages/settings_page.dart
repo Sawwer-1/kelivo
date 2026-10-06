@@ -16,6 +16,7 @@ import '../../workspace/pages/skills_page.dart';
 import '../../workspace/pages/workspace_settings_page.dart';
 import '../../assistant/pages/assistant_settings_page.dart';
 import 'about_page.dart';
+import 'doctor_page.dart';
 import 'memory_settings_page.dart';
 import 'tts_services_page.dart';
 import 'tool_schema_settings_page.dart';
@@ -408,6 +409,17 @@ class SettingsPage extends StatelessWidget {
           header(l10n.settingsPageAboutSection),
           SectionCard(
             children: [
+              _iosNavRow(
+                context,
+                icon: Lucide.HeartPulse,
+                label: l10n.doctorPageTitle,
+                onTap: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const DoctorPage()));
+                },
+              ),
+              _iosDivider(context),
               _iosNavRow(
                 context,
                 icon: Lucide.BadgeInfo,

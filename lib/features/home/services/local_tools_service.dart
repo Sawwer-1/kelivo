@@ -10,6 +10,7 @@ import '../../../core/models/health_data_type.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import 'web_extract_service.dart';
 
 typedef TextToSpeechStarter = Future<void> Function(String text);
 
@@ -40,6 +41,10 @@ class LocalToolNames {
   static const String ownerListAssistants = 'owner_list_assistants';
   static const String ownerListProviders = 'owner_list_providers';
 
+  // G3: fetch a public web page and return its readable text. Read-only,
+  // egress-guarded (private/loopback targets are rejected).
+  static const String webExtract = 'web_extract';
+
   static const List<String> all = [
     timeInfo,
     clipboard,
@@ -60,6 +65,7 @@ class LocalToolNames {
     ownerReadConversation,
     ownerListAssistants,
     ownerListProviders,
+    webExtract,
   ];
 
   static const List<String> requiresUserApproval = [
@@ -507,6 +513,8 @@ class LocalToolsService {
         return _ownerListAssistantsDefinition;
       case LocalToolNames.ownerListProviders:
         return _ownerListProvidersDefinition;
+      case LocalToolNames.webExtract:
+        return _webExtractDefinition;
       default:
         throw ArgumentError.value(name, 'name', 'Unknown local tool');
     }
@@ -571,6 +579,9 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.ownerListProviders) {
       return _handleOwnerListProviders(ownerContext);
+    }
+    if (name == LocalToolNames.webExtract) {
+      return WebExtractService.extract(args);
     }
     if (name == LocalToolNames.textToSpeech) {
       return _handleTextToSpeechTool(args, onSpeakText);
@@ -830,6 +841,35 @@ class LocalToolsService {
           'API keys are never included. Read-only; every call requires user '
           'approval.',
       'parameters': {'type': 'object', 'properties': <String, dynamic>{}},
+    },
+  };
+
+  static const Map<String, dynamic> _webExtractDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.webExtract,
+      'description':
+          'Fetch a public web page and return its readable main text '
+          '(simplified readability extraction; scripts/styles/nav removed). '
+          'Use for reading articles, docs or blog posts when the user shares '
+          'a URL or asks to read a page. Private/loopback hosts are blocked. '
+          'Returns JSON with url/title/text/truncated.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'url': {
+            'type': 'string',
+            'description': 'Absolute http(s) URL of the page to read.',
+          },
+          'max_chars': {
+            'type': 'integer',
+            'description':
+                'Optional cap on returned text length, default 8000, '
+                'max 50000.',
+          },
+        },
+        'required': ['url'],
+      },
     },
   };
 
