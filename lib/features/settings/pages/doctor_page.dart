@@ -291,7 +291,7 @@ class _DoctorContentState extends State<DoctorContent> {
     }
     final dir = Directory(root);
     if (!dir.existsSync()) {
-      return const DoctorCheckResult(
+      return DoctorCheckResult(
         status: DoctorStatus.warn,
         detail: '$root not found (gateway not installed or never run).',
       );
