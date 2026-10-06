@@ -35,6 +35,7 @@ import '../controllers/stream_controller.dart' as stream_ctrl;
 import '../controllers/generation_controller.dart';
 import 'ask_user_interaction_service.dart';
 import 'context_assembly.dart';
+import 'context_compaction_service.dart';
 import 'context_usage_service.dart';
 import 'message_builder_service.dart';
 import 'tool_approval_service.dart';
@@ -185,10 +186,37 @@ class MessageGenerationService {
       externalMounts = contextProvider.read<ExternalMountsProvider?>();
     } catch (_) {}
 
+    // E2 AutoCompaction: replace the summarized prefix (everything up to the
+    // stored watermark) with the stored summary. A missing/failed plan falls
+    // back to plain history, keeping behavior identical when disabled.
+    final compaction = currentConversation == null
+        ? null
+        : ContextCompactionService.readFrom(currentConversation.extras);
+    String? compactionSummary;
+    var compactionMessages = messages;
+    var compactionConversation = currentConversation;
+    if (compaction != null) {
+      final plan = ContextCompactionService.planInjection(
+        messages: messages,
+        versionSelections: versionSelections,
+        truncateIndex: currentConversation?.truncateIndex ?? -1,
+        watermarkId: compaction.watermarkId,
+      );
+      if (plan != null) {
+        compactionMessages = plan.messages;
+        compactionSummary = compaction.summary;
+        // The truncateIndex was already applied while planning; neutralize it
+        // so buildApiMessages does not apply it a second time.
+        compactionConversation = currentConversation?.copyWith(
+          truncateIndex: -1,
+        );
+      }
+    }
+
     final apiMessages = messageBuilderService.buildApiMessages(
-      messages: messages,
+      messages: compactionMessages,
       versionSelections: versionSelections,
-      currentConversation: currentConversation,
+      currentConversation: compactionConversation,
       includeToolMessages: includeToolMessages,
     );
 
@@ -218,6 +246,9 @@ class MessageGenerationService {
       modelId,
       conversation: promptConversation,
     );
+    if (compactionSummary != null) {
+      ContextCompactionService.injectSummary(apiMessages, compactionSummary);
+    }
     await messageBuilderService.injectMemoryAndRecentChats(
       apiMessages,
       assistant,
@@ -385,6 +416,16 @@ class MessageGenerationService {
     );
   }
 
+  /// Best-effort locale tag for auto-compaction prompts; background tasks
+  /// must not fail when no Localizations scope is available.
+  String _compactionLocale() {
+    try {
+      return Localizations.localeOf(contextProvider).toLanguageTag();
+    } catch (_) {
+      return 'the conversation language';
+    }
+  }
+
   /// Prepare API messages with all injections applied.
   /// [requiredAttachmentMessageId] identifies a new submission; retries and
   /// historical context can legitimately reference attachments since removed.
@@ -448,6 +489,20 @@ class MessageGenerationService {
             ? after
             : null;
       },
+    );
+    // E2 AutoCompaction: budget check + background compaction (fire-and-
+    // forget; only later turns see the summary). Previews never reach this
+    // path, so previewing cannot trigger a background summarize.
+    unawaited(
+      ContextCompactionService.maybeCompactAfterAssembly(
+        conversation: currentConversation,
+        assistant: assistant,
+        settings: settings,
+        chatService: chatService,
+        apiMessages: packed.apiMessages,
+        toolDefs: packed.toolDefs,
+        locale: _compactionLocale(),
+      ),
     );
     final cfg = packed.cfg;
     final apiMessages = packed.apiMessages;

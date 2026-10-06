@@ -1099,6 +1099,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantEditTokenBudgetHardHint => 'Off';
 
   @override
+  String get assistantEditContextBudgetTitle => 'Context Budget';
+
+  @override
+  String get assistantEditContextBudgetDescription =>
+      'Once the estimated request exceeds this many tokens, older history is auto-summarized and injected in the same conversation';
+
+  @override
+  String get assistantEditContextBudgetHint => 'Off';
+
+  @override
   String get assistantEditChatBackgroundTitle => 'Chat Background';
 
   @override

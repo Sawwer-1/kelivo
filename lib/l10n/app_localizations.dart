@@ -2104,6 +2104,24 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get assistantEditTokenBudgetHardHint;
 
+  /// No description provided for @assistantEditContextBudgetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Context Budget'**
+  String get assistantEditContextBudgetTitle;
+
+  /// No description provided for @assistantEditContextBudgetDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Once the estimated request exceeds this many tokens, older history is auto-summarized and injected in the same conversation'**
+  String get assistantEditContextBudgetDescription;
+
+  /// No description provided for @assistantEditContextBudgetHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get assistantEditContextBudgetHint;
+
   /// No description provided for @assistantEditChatBackgroundTitle.
   ///
   /// In en, this message translates to:

@@ -1058,6 +1058,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditTokenBudgetHardHint => '关闭';
 
   @override
+  String get assistantEditContextBudgetTitle => '上下文预算';
+
+  @override
+  String get assistantEditContextBudgetDescription =>
+      '估算总用量超过该值时，自动把较早历史压缩为摘要注入同一会话';
+
+  @override
+  String get assistantEditContextBudgetHint => '关闭';
+
+  @override
   String get assistantEditChatBackgroundTitle => '聊天背景';
 
   @override
@@ -13416,6 +13426,16 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get assistantEditTokenBudgetHardHint => '关闭';
+
+  @override
+  String get assistantEditContextBudgetTitle => '上下文预算';
+
+  @override
+  String get assistantEditContextBudgetDescription =>
+      '估算总用量超过该值时，自动把较早历史压缩为摘要注入同一会话';
+
+  @override
+  String get assistantEditContextBudgetHint => '关闭';
 
   @override
   String get assistantEditChatBackgroundTitle => '聊天背景';

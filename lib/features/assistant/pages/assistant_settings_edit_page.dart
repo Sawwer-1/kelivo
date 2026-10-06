@@ -1887,6 +1887,7 @@ class _DesktopAssistantBasicPaneState
   late final TextEditingController _maxTokensCtrl;
   late final TextEditingController _tokenBudgetSoftCtrl;
   late final TextEditingController _tokenBudgetHardCtrl;
+  late final TextEditingController _contextBudgetCtrl;
   bool _hoverChatModel = false;
   bool _hoverBgChooser = false;
   final GlobalKey _avatarKey = GlobalKey();
@@ -1903,6 +1904,9 @@ class _DesktopAssistantBasicPaneState
     _tokenBudgetHardCtrl = TextEditingController(
       text: a.tokenBudgetHardCap?.toString() ?? '',
     );
+    _contextBudgetCtrl = TextEditingController(
+      text: a.contextBudget?.toString() ?? '',
+    );
   }
 
   @override
@@ -1914,6 +1918,7 @@ class _DesktopAssistantBasicPaneState
       _maxTokensCtrl.text = a.maxTokens?.toString() ?? '';
       _tokenBudgetSoftCtrl.text = a.tokenBudgetSoftCap?.toString() ?? '';
       _tokenBudgetHardCtrl.text = a.tokenBudgetHardCap?.toString() ?? '';
+      _contextBudgetCtrl.text = a.contextBudget?.toString() ?? '';
     }
   }
 
@@ -1923,6 +1928,7 @@ class _DesktopAssistantBasicPaneState
     _maxTokensCtrl.dispose();
     _tokenBudgetSoftCtrl.dispose();
     _tokenBudgetHardCtrl.dispose();
+    _contextBudgetCtrl.dispose();
     super.dispose();
   }
 
@@ -2529,6 +2535,63 @@ class _DesktopAssistantBasicPaneState
                           a.copyWith(
                             tokenBudgetHardCap: n,
                             clearTokenBudgetHardCap: trimmed.isEmpty,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  labelWithHelp(
+                    l10n.assistantEditContextBudgetTitle,
+                    l10n.assistantEditContextBudgetDescription,
+                  ),
+                  const SizedBox(height: 8),
+                  Focus(
+                    onFocusChange: (has) {
+                      if (!has) {
+                        final trimmed = _contextBudgetCtrl.text.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            contextBudget: n,
+                            clearContextBudget: trimmed.isEmpty,
+                          ),
+                        );
+                      }
+                    },
+                    child: TextField(
+                      controller: _contextBudgetCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: l10n.assistantEditContextBudgetHint,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 20,
+                        ),
+                        filled: true,
+                        fillColor: context.appColors.surfaceFill,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.outlineVariant.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(
+                            color: cs.primary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                      style: TextStyle(fontSize: 13.5),
+                      onSubmitted: (v) {
+                        final trimmed = v.trim();
+                        final n = int.tryParse(trimmed);
+                        context.read<AssistantProvider>().updateAssistant(
+                          a.copyWith(
+                            contextBudget: n,
+                            clearContextBudget: trimmed.isEmpty,
                           ),
                         );
                       },

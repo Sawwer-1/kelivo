@@ -98,6 +98,12 @@ class Assistant {
   // Soft cap injects a wrap-up notice; hard cap auto-stops the generation.
   final int? tokenBudgetSoftCap;
   final int? tokenBudgetHardCap;
+
+  /// Auto-compaction context budget (E2): when the estimated request usage
+  /// exceeds this many tokens, older history is summarized into
+  /// `conversation.extras['compaction']` and injected on later turns.
+  /// null = disabled.
+  final int? contextBudget;
   // Preset conversation messages (ordered)
   final List<PresetMessage> presetMessages;
   // Regex replacement rules
@@ -150,6 +156,7 @@ class Assistant {
     this.useIso8601TimeFormat = false,
     this.tokenBudgetSoftCap,
     this.tokenBudgetHardCap,
+    this.contextBudget,
     this.presetMessages = const <PresetMessage>[],
     this.regexRules = const <AssistantRegex>[],
   });
@@ -202,6 +209,8 @@ class Assistant {
     int? tokenBudgetHardCap,
     bool clearTokenBudgetSoftCap = false,
     bool clearTokenBudgetHardCap = false,
+    int? contextBudget,
+    bool clearContextBudget = false,
     List<PresetMessage>? presetMessages,
     List<AssistantRegex>? regexRules,
     bool clearChatModel = false,
@@ -291,6 +300,9 @@ class Assistant {
       tokenBudgetHardCap: clearTokenBudgetHardCap
           ? null
           : (tokenBudgetHardCap ?? this.tokenBudgetHardCap),
+      contextBudget: clearContextBudget
+          ? null
+          : (contextBudget ?? this.contextBudget),
       presetMessages: presetMessages ?? this.presetMessages,
       regexRules: regexRules ?? this.regexRules,
     );
@@ -342,6 +354,7 @@ class Assistant {
     'useIso8601TimeFormat': useIso8601TimeFormat,
     'tokenBudgetSoftCap': tokenBudgetSoftCap,
     'tokenBudgetHardCap': tokenBudgetHardCap,
+    'contextBudget': contextBudget,
     'presetMessages': PresetMessage.encodeList(presetMessages),
     'regexRules': regexRules.map((e) => e.toJson()).toList(),
   };
@@ -479,6 +492,7 @@ class Assistant {
     useIso8601TimeFormat: json['useIso8601TimeFormat'] as bool? ?? false,
     tokenBudgetSoftCap: (json['tokenBudgetSoftCap'] as num?)?.toInt(),
     tokenBudgetHardCap: (json['tokenBudgetHardCap'] as num?)?.toInt(),
+    contextBudget: (json['contextBudget'] as num?)?.toInt(),
     presetMessages: (() {
       try {
         return PresetMessage.decodeList(json['presetMessages']);
