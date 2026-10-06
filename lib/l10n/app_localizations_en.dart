@@ -7117,6 +7117,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'When enabled, every client tool call (name, status, duration, truncated arguments) is appended to tool_audit/audit-YYYYMMDD.jsonl.';
 
   @override
+  String get bypassLearningSettingTitle => 'Bypass Learning';
+
+  @override
+  String get bypassLearningSettingSubtitle =>
+      'After each reply finishes, that turn is dropped into the learning gateway inbox (%APPDATA%\\kelivo_learning\\inbox); learning_ingest_inbox distills it into pending lessons. Off by default.';
+
+  @override
+  String get settingsPageOwnerIdentity => 'Owner Identity';
+
+  @override
+  String get ownerIdentityPageTitle => 'Owner Identity';
+
+  @override
+  String get ownerIdentityEnabledTitle => 'Enable owner identity';
+
+  @override
+  String get ownerIdentityEnabledSubtitle =>
+      'Inject your self-written declaration into the system prompt (model read-only).';
+
+  @override
+  String get ownerIdentityNameTitle => 'Preferred Name';
+
+  @override
+  String get ownerIdentityNameHint =>
+      'How you want to be addressed, e.g. Alex';
+
+  @override
+  String get ownerIdentityDeclarationTitle => 'Declaration';
+
+  @override
+  String get ownerIdentityDeclarationHint =>
+      'Stable background, goals or constraints about you, free-form.';
+
+  @override
+  String get ownerIdentityHowItWorks =>
+      'When enabled, a fixed <owner_profile> block is appended to the system prompt of every conversation. It never alters your chat history and the model cannot edit it; adjust it anytime on this page.';
+
+  @override
   String get contextLogSettingTitle => 'Context Logging';
 
   @override

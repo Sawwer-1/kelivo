@@ -181,6 +181,8 @@ class _DisplaySettingsBody extends StatelessWidget {
                   _ToggleRowFlutterLogging(),
                   _RowDivider(),
                   _ToggleRowToolAudit(),
+                  _RowDivider(),
+                  _ToggleRowBypassLearning(),
                 ],
               ),
             ],
@@ -2955,6 +2957,22 @@ class _ToggleRowToolAudit extends StatelessWidget {
       value: sp.toolAuditEnabled,
       onChanged: (v) =>
           context.read<SettingsProvider>().setToolAuditEnabled(v),
+    );
+  }
+}
+
+class _ToggleRowBypassLearning extends StatelessWidget {
+  const _ToggleRowBypassLearning();
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final sp = context.watch<SettingsProvider>();
+    return _ToggleRow(
+      label: l10n.bypassLearningSettingTitle,
+      tip: l10n.bypassLearningSettingSubtitle,
+      value: sp.bypassLearningEnabled,
+      onChanged: (v) =>
+          context.read<SettingsProvider>().setBypassLearningEnabled(v),
     );
   }
 }

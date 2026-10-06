@@ -65,6 +65,7 @@ import 'setting/workspace_pane.dart';
 import 'setting/skills_settings_pane.dart';
 import 'setting/tts_services_pane.dart';
 import 'setting/memory_settings_pane.dart';
+import 'setting/owner_identity_pane.dart';
 import 'setting/quick_phrases_pane.dart';
 import 'setting/instruction_injection_pane.dart';
 import 'setting/world_book_pane.dart';
@@ -124,6 +125,7 @@ enum _SettingsMenuItem {
   instructionInjection,
   worldBook,
   memory,
+  ownerIdentity,
   tts,
   networkProxy,
   backup,
@@ -347,6 +349,10 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           return const DesktopMemorySettingsPane(
                             key: ValueKey('memory'),
                           );
+                        case _SettingsMenuItem.ownerIdentity:
+                          return const DesktopOwnerIdentityPane(
+                            key: ValueKey('ownerIdentity'),
+                          );
                         case _SettingsMenuItem.tts:
                           return const DesktopTtsServicesPane(
                             key: ValueKey('tts'),
@@ -432,6 +438,11 @@ class _SettingsMenu extends StatelessWidget {
         l10n.settingsPageWorldBook,
       ),
       (_SettingsMenuItem.memory, lucide.Lucide.Brain, l10n.settingsPageMemory),
+      (
+        _SettingsMenuItem.ownerIdentity,
+        lucide.Lucide.User,
+        l10n.settingsPageOwnerIdentity,
+      ),
       (_SettingsMenuItem.tts, lucide.Lucide.Volume2, l10n.settingsPageTts),
       (
         _SettingsMenuItem.networkProxy,

@@ -12979,6 +12979,72 @@ abstract class AppLocalizations {
   /// **'When enabled, every client tool call (name, status, duration, truncated arguments) is appended to tool_audit/audit-YYYYMMDD.jsonl.'**
   String get toolAuditSettingSubtitle;
 
+  /// No description provided for @bypassLearningSettingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bypass Learning'**
+  String get bypassLearningSettingTitle;
+
+  /// No description provided for @bypassLearningSettingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'After each reply finishes, that turn is dropped into the learning gateway inbox (%APPDATA%\\kelivo_learning\\inbox); learning_ingest_inbox distills it into pending lessons. Off by default.'**
+  String get bypassLearningSettingSubtitle;
+
+  /// No description provided for @settingsPageOwnerIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner Identity'**
+  String get settingsPageOwnerIdentity;
+
+  /// No description provided for @ownerIdentityPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner Identity'**
+  String get ownerIdentityPageTitle;
+
+  /// No description provided for @ownerIdentityEnabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable owner identity'**
+  String get ownerIdentityEnabledTitle;
+
+  /// No description provided for @ownerIdentityEnabledSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Inject your self-written declaration into the system prompt (model read-only).'**
+  String get ownerIdentityEnabledSubtitle;
+
+  /// No description provided for @ownerIdentityNameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Name'**
+  String get ownerIdentityNameTitle;
+
+  /// No description provided for @ownerIdentityNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'How you want to be addressed, e.g. Alex'**
+  String get ownerIdentityNameHint;
+
+  /// No description provided for @ownerIdentityDeclarationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Declaration'**
+  String get ownerIdentityDeclarationTitle;
+
+  /// No description provided for @ownerIdentityDeclarationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stable background, goals or constraints about you, free-form.'**
+  String get ownerIdentityDeclarationHint;
+
+  /// No description provided for @ownerIdentityHowItWorks.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, a fixed <owner_profile> block is appended to the system prompt of every conversation. It never alters your chat history and the model cannot edit it; adjust it anytime on this page.'**
+  String get ownerIdentityHowItWorks;
+
   /// No description provided for @contextLogSettingTitle.
   ///
   /// In en, this message translates to:

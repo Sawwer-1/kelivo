@@ -80,6 +80,45 @@ async def main() -> None:
             assert stats["by_status"].get("promoted") == 1, stats
             print("stats ok")
 
+            # Bypass ingest: drop two inbox turns (one with a learnable
+            # signal, one without); expect 1 shadow lesson and both files
+            # moved out of the inbox root.
+            inbox = Path(tmp) / "inbox"
+            inbox.mkdir(parents=True, exist_ok=True)
+            (inbox / "bypass-1.json").write_text(json.dumps({
+                "ts": 0, "conversation_id": "conv_test",
+                "user_text": "以后部署前记得先查 CI，不要直接动手",
+                "assistant_text": "好的，明白了。",
+            }, ensure_ascii=False), encoding="utf-8")
+            (inbox / "bypass-2.json").write_text(json.dumps({
+                "ts": 0, "conversation_id": "conv_test",
+                "user_text": "今天天气怎么样",
+            }, ensure_ascii=False), encoding="utf-8")
+            ingest = await call(session, "learning_ingest_inbox", {})
+            assert ingest["scanned"] == 2, ingest
+            assert ingest["lessons_created"] == 1, ingest
+            assert ingest["skipped_no_signal"] == 1, ingest
+            assert not (inbox / "bypass-1.json").exists(), ingest
+            queue = await call(session, "learning_review_queue", {})
+            # "部署前先查 CI" was promoted earlier, so shadow queue is
+            # the first preference lesson + the new bypass lesson.
+            assert len(queue) == 2 and any(
+                "对话旁路" in r["content"] for r in queue
+            ), queue
+            print("bypass ingest ok")
+
+            # CJK full-text recall: promote a Chinese lesson, query a
+            # substring without word boundaries (bigram FTS path).
+            r = await call(session, "learning_record", {
+                "lesson": "汇报时先给结论再摆依据",
+                "type": "preference", "tags": "汇报",
+            })
+            await call(session, "learning_promote", {"lesson_id": r["id"]})
+            recall = await call(session, "learning_recall",
+                                {"query": "先给结论"})
+            assert any("先给结论" in x["content"] for x in recall), recall
+            print("fts cjk recall ok")
+
             export = await call(session, "learning_export_worldbook", {
                 "path": str(Path(tmp) / "wb.json"),
                 "mode": "keywords",

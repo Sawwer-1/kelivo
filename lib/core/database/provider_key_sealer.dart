@@ -17,6 +17,12 @@ final class ProviderKeySealer {
 
   static const _credentialFields = <String>{'apiKey'};
   static const _credentialListFields = <String>{'apiKeys'};
+  /// OAuth token bundles: each token field inside the nested map is sealed
+  /// individually (AAA furnace-2). The nested map itself keeps unsealed
+  /// metadata (sessionId, expiresAt, …) so race checks and validation keep
+  /// working on plaintext values.
+  static const _credentialObjectFields = <String>{'oauthCredentials'};
+  static const _oauthTokenFields = <String>{'accessToken', 'refreshToken'};
 
   static bool get _active => KeyVault.instance.isSupported;
 
@@ -120,6 +126,20 @@ final class ProviderKeySealer {
           }
         }
         out[key] = list;
+      } else if (_credentialObjectFields.contains(key) && value is Map) {
+        final nested = <String, dynamic>{};
+        value.forEach((nestedKey, nestedValue) {
+          if (_oauthTokenFields.contains(nestedKey) &&
+              nestedValue is String &&
+              nestedValue.isNotEmpty) {
+            final mapped = mapper(nestedValue);
+            if (mapped != nestedValue) changed = true;
+            nested[nestedKey as String] = mapped;
+          } else {
+            nested[nestedKey as String] = nestedValue;
+          }
+        });
+        out[key] = nested;
       } else {
         out[key] = value;
       }

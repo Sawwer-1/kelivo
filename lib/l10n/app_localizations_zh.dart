@@ -6834,6 +6834,43 @@ class AppLocalizationsZh extends AppLocalizations {
       '开启后每次工具调用（名称、状态、耗时、截断后的参数）会追加写入 tool_audit/audit-日期.jsonl';
 
   @override
+  String get bypassLearningSettingTitle => '对话旁路学习';
+
+  @override
+  String get bypassLearningSettingSubtitle =>
+      '开启后每次回复完成，会把该轮对话写入学习网关收件箱（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 摄取为待审经验。默认关闭。';
+
+  @override
+  String get settingsPageOwnerIdentity => 'Owner 身份';
+
+  @override
+  String get ownerIdentityPageTitle => 'Owner 身份';
+
+  @override
+  String get ownerIdentityEnabledTitle => '启用 Owner 身份面';
+
+  @override
+  String get ownerIdentityEnabledSubtitle =>
+      '把你亲笔撰写的身份声明注入系统提示词（模型只读）。';
+
+  @override
+  String get ownerIdentityNameTitle => '称呼';
+
+  @override
+  String get ownerIdentityNameHint => '希望被怎么称呼，例如：老王';
+
+  @override
+  String get ownerIdentityDeclarationTitle => '身份声明';
+
+  @override
+  String get ownerIdentityDeclarationHint =>
+      '关于你的稳定背景、目标或约束，自由撰写。';
+
+  @override
+  String get ownerIdentityHowItWorks =>
+      '启用后，每次对话的系统提示词末尾会附加固定格式的 <owner_profile> 块。它不会改动聊天记录，模型也无法修改；可随时回到本页调整。';
+
+  @override
   String get contextLogSettingTitle => '上下文日志';
 
   @override
@@ -18997,6 +19034,43 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   @override
   String get toolAuditSettingSubtitle =>
       '开启后每次工具调用（名称、状态、耗时、截断后的参数）会追加写入 tool_audit/audit-日期.jsonl';
+
+  @override
+  String get bypassLearningSettingTitle => '对话旁路学习';
+
+  @override
+  String get bypassLearningSettingSubtitle =>
+      '开启后每次回复完成，会把该轮对话写入学习网关收件箱（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 摄取为待审经验。默认关闭。';
+
+  @override
+  String get settingsPageOwnerIdentity => 'Owner 身份';
+
+  @override
+  String get ownerIdentityPageTitle => 'Owner 身份';
+
+  @override
+  String get ownerIdentityEnabledTitle => '启用 Owner 身份面';
+
+  @override
+  String get ownerIdentityEnabledSubtitle =>
+      '把你亲笔撰写的身份声明注入系统提示词（模型只读）。';
+
+  @override
+  String get ownerIdentityNameTitle => '称呼';
+
+  @override
+  String get ownerIdentityNameHint => '希望被怎么称呼，例如：老王';
+
+  @override
+  String get ownerIdentityDeclarationTitle => '身份声明';
+
+  @override
+  String get ownerIdentityDeclarationHint =>
+      '关于你的稳定背景、目标或约束，自由撰写。';
+
+  @override
+  String get ownerIdentityHowItWorks =>
+      '启用后，每次对话的系统提示词末尾会附加固定格式的 <owner_profile> 块。它不会改动聊天记录，模型也无法修改；可随时回到本页调整。';
 
   @override
   String get contextLogSettingTitle => '上下文日志';
@@ -31217,6 +31291,43 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   @override
   String get toolAuditSettingSubtitle =>
       '開啟後每次工具調用（名稱、狀態、耗時、截斷後的參數）會追加寫入 tool_audit/audit-日期.jsonl';
+
+  @override
+  String get bypassLearningSettingTitle => '對話旁路學習';
+
+  @override
+  String get bypassLearningSettingSubtitle =>
+      '開啟後每次回覆完成，會把該輪對話寫入學習閘道收件匣（%APPDATA%\\kelivo_learning\\inbox），由 learning_ingest_inbox 攝取為待審經驗。預設關閉。';
+
+  @override
+  String get settingsPageOwnerIdentity => 'Owner 身分';
+
+  @override
+  String get ownerIdentityPageTitle => 'Owner 身分';
+
+  @override
+  String get ownerIdentityEnabledTitle => '啟用 Owner 身分面';
+
+  @override
+  String get ownerIdentityEnabledSubtitle =>
+      '把你親筆撰寫的身分宣告注入系統提示詞（模型唯讀）。';
+
+  @override
+  String get ownerIdentityNameTitle => '稱呼';
+
+  @override
+  String get ownerIdentityNameHint => '希望被怎麼稱呼，例如：老王';
+
+  @override
+  String get ownerIdentityDeclarationTitle => '身分宣告';
+
+  @override
+  String get ownerIdentityDeclarationHint =>
+      '關於你的穩定背景、目標或約束，自由撰寫。';
+
+  @override
+  String get ownerIdentityHowItWorks =>
+      '啟用後，每次對話的系統提示詞結尾會附加固定格式的 <owner_profile> 區塊。它不會改動聊天記錄，模型也無法修改；可隨時回到本頁調整。';
 
   @override
   String get contextLogSettingTitle => '上下文日誌';

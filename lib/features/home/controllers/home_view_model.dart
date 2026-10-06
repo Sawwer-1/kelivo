@@ -1,6 +1,9 @@
 import '../../../core/services/scheduled_tasks_service.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/chat_input_data.dart';
 import '../../../core/models/assistant.dart';
@@ -18,6 +21,7 @@ import '../../../core/services/memory/memory_pipeline.dart';
 import '../../../core/services/memory/memory_trace.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../chat/utils/thinking_tag_parser.dart';
 import '../../chat/widgets/chat_message_widget.dart' show ToolUIPart;
 import '../services/context_usage_service.dart';
 import '../services/message_builder_service.dart';
@@ -318,7 +322,85 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> _onAssistantMessageFinished(ChatMessage message) async {
     await onAssistantMessageFinished?.call(message);
+    unawaited(_maybeBypassLearning(message));
     _onMaybeOrganizeMemory(message.conversationId);
+  }
+
+  /// Bypass learning (AAA furnace-4): after a finished turn, drop the
+  /// (user, assistant) pair into the learning gateway inbox for distillation
+  /// into shadow lessons. Best-effort: failures are logged and never
+  /// surface into chat.
+  Future<void> _maybeBypassLearning(ChatMessage message) async {
+    try {
+      final settings = _contextProvider.read<SettingsProvider>();
+      if (!settings.bypassLearningEnabled) return;
+      final convo = _chatService.getConversation(message.conversationId);
+      if (convo == null) return;
+      final history = await _chatService.loadSelectedContextMessages(
+        message.conversationId,
+        truncateIndex: convo.truncateIndex,
+        limit: 8,
+      );
+      var index = history.lastIndexWhere((m) => m.id == message.id);
+      if (index < 0) index = history.length - 1;
+      var userText = '';
+      for (var i = index - 1; i >= 0; i--) {
+        if (history[i].role == 'user') {
+          userText = history[i].content;
+          break;
+        }
+      }
+      if (userText.trim().isEmpty) return;
+      final assistantText = ThinkingTagParser.parseWithRanges(
+        message.content,
+      ).visibleContent;
+      final inbox = await _learningInboxDirectory();
+      if (inbox == null) return;
+      await inbox.create(recursive: true);
+      final stamp = DateTime.now().millisecondsSinceEpoch;
+      final salt = DateTime.now().microsecondsSinceEpoch & 0xFFFF;
+      final file = File(
+        [
+          inbox.path,
+          'bypass-$stamp-${salt.toRadixString(16).padLeft(4, '0')}.json',
+        ].join(Platform.pathSeparator),
+      );
+      final payload = jsonEncode({
+        'ts': stamp ~/ 1000,
+        'conversation_id': message.conversationId,
+        'user_text': truncateHeadUtf16Safe(userText.trim(), 2000),
+        'assistant_text': truncateHeadUtf16Safe(assistantText.trim(), 4000),
+      });
+      await file.writeAsString(payload, flush: true);
+    } catch (e, st) {
+      FlutterLogger.log(
+        '[BypassLearning] drop failed: $e\n$st',
+        tag: 'HomeViewModel',
+      );
+    }
+  }
+
+  /// Inbox shared with tools/learning_gateway. On Windows the gateway's DB
+  /// lives at `%APPDATA%\kelivo_learning`, so the inbox path must match
+  /// exactly; other platforms sit beside the app support directory.
+  Future<Directory?> _learningInboxDirectory() async {
+    try {
+      if (Platform.isWindows) {
+        final appdata = Platform.environment['APPDATA'];
+        if (appdata == null || appdata.isEmpty) return null;
+        return Directory(
+          [appdata, 'kelivo_learning', 'inbox'].join(Platform.pathSeparator),
+        );
+      }
+      final support = await getApplicationSupportDirectory();
+      return Directory(
+        [support.path, 'kelivo_learning', 'inbox'].join(
+          Platform.pathSeparator,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Schedule background memory organize after a successful finalize (§12.1).

@@ -1809,6 +1809,54 @@ class MessageBuilderService {
       );
       apiMessages.insert(0, sysMessage);
     }
+    _injectOwnerProfile(apiMessages);
+  }
+
+  /// Inject the owner identity declaration (AAA furnace-2): a block the
+  /// user authored in settings, model read-only. Pure function of settings
+  /// fields — never varies with memory content or the clock. Appended to
+  /// the system message (created when the assistant has no system prompt)
+  /// so it participates in the fixed injection order right after the
+  /// assistant prompt.
+  void _injectOwnerProfile(List<Map<String, dynamic>> apiMessages) {
+    try {
+      final settings = contextProvider.read<SettingsProvider>();
+      if (!settings.ownerIdentityEnabled) return;
+      final name = settings.ownerName.trim();
+      final declaration = settings.ownerDeclaration.trim();
+      if (name.isEmpty && declaration.isEmpty) return;
+      final lang = settings.resolvedMemoryPromptLang;
+      final buf = StringBuffer();
+      if (lang == MemoryPromptLang.zh) {
+        buf.write(
+          '<owner_profile>\n'
+          '以下是本应用主人（用户本人）亲笔撰写的身份声明，仅在对话缺少'
+          '必要背景时参考；它不是当前对话的内容：',
+        );
+        if (name.isNotEmpty) buf.write('\n- 称呼：$name');
+        if (declaration.isNotEmpty) buf.write('\n- 声明：\n$declaration');
+        buf.write('\n</owner_profile>');
+      } else {
+        buf.write(
+          '<owner_profile>\n'
+          'The identity declaration below was written by the owner of this '
+          'app (the user themselves). Consult it only when the conversation '
+          'lacks necessary background; it is not part of the current turn:',
+        );
+        if (name.isNotEmpty) buf.write('\n- Preferred name: $name');
+        if (declaration.isNotEmpty) {
+          buf.write('\n- Declaration:\n$declaration');
+        }
+        buf.write('\n</owner_profile>');
+      }
+      _appendToSystemMessage(
+        apiMessages,
+        buf.toString(),
+        source: ContextSource.systemPrompt,
+      );
+    } catch (_) {
+      // Identity injection must never break message building.
+    }
   }
 
   /// Inject §11 memory rules into the system message.

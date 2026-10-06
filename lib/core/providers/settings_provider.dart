@@ -347,6 +347,15 @@ class SettingsProvider extends ChangeNotifier {
   static const String _flutterLogEnabledKey = 'flutter_log_enabled_v1';
   // Tool call audit trail (AAA): writes tool_audit/audit-YYYYMMDD.jsonl
   static const String _toolAuditEnabledKey = 'tool_audit_enabled_v1';
+  // Bypass learning (AAA furnace-4): the host drops finished conversation
+  // turns into the learning gateway inbox; the gateway distills them into
+  // shadow lessons. Local-only preference.
+  static const String _bypassLearningEnabledKey = 'bypass_learning_enabled_v1';
+  // Owner identity (AAA furnace-2): a user-authored, model read-only
+  // declaration injected into the system prompt. Local-only preference.
+  static const String _ownerIdentityEnabledKey = 'owner_identity_enabled_v1';
+  static const String _ownerNameKey = 'owner_name_v1';
+  static const String _ownerDeclarationKey = 'owner_declaration_v1';
   // Log settings: save response output, auto-delete, max size
   static const String _logSaveOutputKey = 'log_save_output_v1';
   static const String _logElideLargePayloadsKey = 'log_elide_large_payloads_v1';
@@ -1052,6 +1061,13 @@ class SettingsProvider extends ChangeNotifier {
     await FlutterLogger.setEnabled(_flutterLogEnabled);
     _toolAuditEnabled = localPreferences.getBool(_toolAuditEnabledKey) ?? true;
     ToolCallAudit.enabled = _toolAuditEnabled;
+    _bypassLearningEnabled =
+        localPreferences.getBool(_bypassLearningEnabledKey) ?? false;
+    _ownerIdentityEnabled =
+        localPreferences.getBool(_ownerIdentityEnabledKey) ?? false;
+    _ownerName = localPreferences.getString(_ownerNameKey) ?? '';
+    _ownerDeclaration =
+        localPreferences.getString(_ownerDeclarationKey) ?? '';
     _logSaveOutput = prefs.getBool(_logSaveOutputKey) ?? false;
     RequestLogger.saveOutput = _logSaveOutput;
     _logElideLargePayloads = prefs.getBool(_logElideLargePayloadsKey) ?? true;
@@ -5512,6 +5528,49 @@ Requirements:
     ToolCallAudit.enabled = v;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_toolAuditEnabledKey, v);
+  }
+
+  // Bypass learning (AAA furnace-4): finished turns land in the learning
+  // gateway inbox for distillation into shadow lessons.
+  bool _bypassLearningEnabled = false;
+  bool get bypassLearningEnabled => _bypassLearningEnabled;
+  Future<void> setBypassLearningEnabled(bool v) async {
+    if (_bypassLearningEnabled == v) return;
+    _bypassLearningEnabled = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_bypassLearningEnabledKey, v);
+  }
+
+  // Owner identity (AAA furnace-2): user-authored, model read-only.
+  bool _ownerIdentityEnabled = false;
+  bool get ownerIdentityEnabled => _ownerIdentityEnabled;
+  String _ownerName = '';
+  String get ownerName => _ownerName;
+  String _ownerDeclaration = '';
+  String get ownerDeclaration => _ownerDeclaration;
+  Future<void> setOwnerIdentityEnabled(bool v) async {
+    if (_ownerIdentityEnabled == v) return;
+    _ownerIdentityEnabled = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_ownerIdentityEnabledKey, v);
+  }
+
+  Future<void> setOwnerName(String v) async {
+    if (_ownerName == v) return;
+    _ownerName = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_ownerNameKey, v);
+  }
+
+  Future<void> setOwnerDeclaration(String v) async {
+    if (_ownerDeclaration == v) return;
+    _ownerDeclaration = v;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_ownerDeclarationKey, v);
   }
 
   Future<void> incrementAppLaunchCount() async {
