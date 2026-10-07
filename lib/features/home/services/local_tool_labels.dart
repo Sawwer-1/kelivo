@@ -72,6 +72,12 @@ IconData localToolIcon(String id) {
       return Lucide.Layers;
     case LocalToolNames.ownerMemoryWrite:
       return Lucide.SquarePen;
+    case LocalToolNames.sshExec:
+      return Lucide.Terminal;
+    case LocalToolNames.sshUpload:
+      return Lucide.Upload;
+    case LocalToolNames.sshDownload:
+      return Lucide.Download;
     default:
       return Lucide.Wrench;
   }
@@ -137,6 +143,12 @@ String localToolTitle(AppLocalizations l10n, String id) {
       return l10n.ownerToolMemoryListTitle;
     case LocalToolNames.ownerMemoryWrite:
       return l10n.ownerToolMemoryWriteTitle;
+    case LocalToolNames.sshExec:
+      return l10n.assistantEditLocalToolSshExecTitle;
+    case LocalToolNames.sshUpload:
+      return l10n.assistantEditLocalToolSshUploadTitle;
+    case LocalToolNames.sshDownload:
+      return l10n.assistantEditLocalToolSshDownloadTitle;
     default:
       return id;
   }

@@ -6592,6 +6592,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickCaptureDefaultPrompt => '请解释这张截图';
   String get quickCaptureSend => '发送到会话';
   String get quickCaptureCancel => '取消';
+  String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
+  String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
+  String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
   String get messageMoreSheetContinueOverwriteTitle => '继续生成';
   String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
@@ -18920,6 +18923,9 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get quickCaptureDefaultPrompt => '请解释这张截图';
   String get quickCaptureSend => '发送到会话';
   String get quickCaptureCancel => '取消';
+  String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
+  String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
+  String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
   String get messageMoreSheetContinueOverwriteTitle => '继续生成';
   String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
@@ -31293,6 +31299,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get quickCaptureDefaultPrompt => '請解釋這張截圖';
   String get quickCaptureSend => '傳送到會話';
   String get quickCaptureCancel => '取消';
+  String get assistantEditLocalToolSshExecTitle => 'SSH：執行命令';
+  String get assistantEditLocalToolSshUploadTitle => 'SSH：上傳檔案';
+  String get assistantEditLocalToolSshDownloadTitle => 'SSH：下載檔案';
   String get messageMoreSheetContinueOverwriteTitle => '繼續生成';
   String get messageMoreSheetContinueOverwriteBody => '該訊息已有內容，繼續將從頭重新生成本條並覆蓋現有內容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';

@@ -40,6 +40,8 @@ dependencies:
     path: ./dependencies/tray_manager/packages/tray_manager
   desktop_drop: ^0.7.1
   hotkey_manager: ^0.2.3
+  # G2 SSH/SFTP tools (pure Dart, no native build)
+  dartssh2: ^2.8.2
 
   # Localizations for Chinese/English UI strings
   flutter_localizations:

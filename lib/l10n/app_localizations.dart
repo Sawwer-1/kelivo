@@ -12574,6 +12574,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get quickCaptureCancel;
+  /// No description provided for @assistantEditLocalToolSshExecTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH: run command'**
+  String get assistantEditLocalToolSshExecTitle;
+
+  /// No description provided for @assistantEditLocalToolSshUploadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH: upload file'**
+  String get assistantEditLocalToolSshUploadTitle;
+
+  /// No description provided for @assistantEditLocalToolSshDownloadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH: download file'**
+  String get assistantEditLocalToolSshDownloadTitle;
+
 
 
   /// No description provided for @messageMoreSheetContinueOverwriteTitle.

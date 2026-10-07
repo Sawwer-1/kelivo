@@ -225,7 +225,8 @@ class HotkeyProvider extends ChangeNotifier {
       if (!e.enabled) continue;
       final cmd = e.command;
       if (cmd == null || cmd.trim().isEmpty) continue;
-      final scope = (e.id == 'toggle_app_visibility')
+      final scope = (e.id == 'toggle_app_visibility' ||
+              e.id == 'quick_capture')
           ? HotKeyScope.system
           : HotKeyScope.inapp;
       final hk = _parseCommandToHotKey(cmd, scope: scope);

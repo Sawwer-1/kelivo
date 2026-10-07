@@ -12,6 +12,7 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/memory_provider_v2.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../core/services/ssh/ssh_tools_service.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import 'owner_control_tools_service.dart';
 import 'web_extract_service.dart';
@@ -58,6 +59,9 @@ class LocalToolNames {
   static const String ownerMcpToggle = 'owner_mcp_toggle';
   static const String ownerMemoryList = 'owner_memory_list';
   static const String ownerMemoryWrite = 'owner_memory_write';
+  static const String sshExec = 'ssh_exec';
+  static const String sshUpload = 'ssh_upload';
+  static const String sshDownload = 'ssh_download';
 
   // G3: fetch a public web page and return its readable text. Read-only,
   // egress-guarded (private/loopback targets are rejected).
@@ -93,6 +97,9 @@ class LocalToolNames {
     ownerMcpToggle,
     ownerMemoryList,
     ownerMemoryWrite,
+    sshExec,
+    sshUpload,
+    sshDownload,
     webExtract,
   ];
 
@@ -114,6 +121,9 @@ class LocalToolNames {
     ownerMcpToggle,
     ownerMemoryList,
     ownerMemoryWrite,
+    sshExec,
+    sshUpload,
+    sshDownload,
   ];
 }
 
@@ -576,6 +586,12 @@ class LocalToolsService {
         return OwnerControlTools.ownerMemoryListDefinition;
       case LocalToolNames.ownerMemoryWrite:
         return OwnerControlTools.ownerMemoryWriteDefinition;
+      case LocalToolNames.sshExec:
+        return SshToolsService.sshExecDefinition;
+      case LocalToolNames.sshUpload:
+        return SshToolsService.sshUploadDefinition;
+      case LocalToolNames.sshDownload:
+        return SshToolsService.sshDownloadDefinition;
       case LocalToolNames.webExtract:
         return _webExtractDefinition;
       default:
@@ -672,6 +688,15 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.ownerMemoryWrite) {
       return OwnerControlTools.handleMemoryWrite(args, ownerContext);
+    }
+    if (name == LocalToolNames.sshExec) {
+      return SshToolsService.exec(args);
+    }
+    if (name == LocalToolNames.sshUpload) {
+      return SshToolsService.upload(args);
+    }
+    if (name == LocalToolNames.sshDownload) {
+      return SshToolsService.download(args);
     }
     if (name == LocalToolNames.webExtract) {
       return WebExtractService.extract(args);

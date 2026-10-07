@@ -69,10 +69,18 @@ class _QuickCaptureBodyState extends State<_QuickCaptureBody> {
   @override
   void initState() {
     super.initState();
-    final l10n = AppLocalizations.of(context);
-    _promptCtrl = TextEditingController(
-      text: l10n?.quickCaptureDefaultPrompt ?? '',
-    );
+    // Default prompt is filled in didChangeDependencies: reading
+    // AppLocalizations (an InheritedWidget) inside initState throws.
+    _promptCtrl = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_promptCtrl.text.isEmpty) {
+      final l10n = AppLocalizations.of(context);
+      _promptCtrl.text = l10n?.quickCaptureDefaultPrompt ?? '';
+    }
   }
 
   @override

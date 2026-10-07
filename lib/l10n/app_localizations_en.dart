@@ -6863,6 +6863,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickCaptureDefaultPrompt => 'Explain this screenshot';
   String get quickCaptureSend => 'Send to chat';
   String get quickCaptureCancel => 'Cancel';
+  String get assistantEditLocalToolSshExecTitle => 'SSH: run command';
+  String get assistantEditLocalToolSshUploadTitle => 'SSH: upload file';
+  String get assistantEditLocalToolSshDownloadTitle => 'SSH: download file';
   String get messageMoreSheetContinueOverwriteTitle => 'Continue generation';
   String get messageMoreSheetContinueOverwriteBody => 'This message already has content. Continuing will regenerate it from scratch and replace the current text.';
   String get messageMoreSheetContinueOverwriteConfirm => 'Regenerate';
