@@ -2355,6 +2355,7 @@
   "assistantEditLocalToolSshExecTitle": "SSH：执行命令",
   "assistantEditLocalToolSshUploadTitle": "SSH：上传文件",
   "assistantEditLocalToolSshDownloadTitle": "SSH：下载文件",
+  "assistantEditLocalToolSpawnSubtaskTitle": "派生子任务",
   "settingsPageSshHosts": "SSH 主机",
   "sshHostsDescription": "SSH 工具的保存主机档案。密码经 Windows DPAPI 密封存储，模型只见档案名称。",
   "sshHostsEmpty": "还没有保存的主机，点右上角 + 添加。",

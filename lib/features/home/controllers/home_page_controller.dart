@@ -1,5 +1,8 @@
 import '../../scheduled_tasks/scheduled_task_preparation_binding.dart';
+import '../../../core/database/generation_run.dart';
+import '../../../core/services/agents/subtask_service.dart';
 import '../../../core/services/scheduled_tasks_service.dart';
+import '../services/tool_approval_service.dart';
 import '../../scheduled_tasks/scheduled_task_runner.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart' show listEquals, defaultTargetPlatform;
@@ -899,12 +902,142 @@ class HomePageController extends ChangeNotifier {
             );
         await ScheduledTasksService.instance.attach(executor);
       }
+      // G6 Sub-agent: attach after the chat stack is ready so tool calls can
+      // delegate to fresh conversations immediately.
+      SubtaskService.instance.attach(_spawnSubtask);
     } finally {
       _startupConversationPending = false;
       notifyListeners();
       if (_chatInitialized) {
         unawaited(_openPendingNotificationConversation());
       }
+    }
+  }
+
+  /// G6 Sub-agent executor: runs a delegated task in a fresh, non-activated
+  /// conversation of the chosen assistant via the same unattended send path
+  /// as scheduled tasks. Tool calls inside the subtask keep the standard
+  /// approval flow — a pending approval/question is reported back instead of
+  /// being answered for the user.
+  Future<Map<String, Object?>> _spawnSubtask({
+    required String prompt,
+    required String assistantId,
+    String? title,
+    required bool wait,
+  }) async {
+    // Read everything needed from the context BEFORE any await: after the
+    // first async gap the widget tree may have moved on.
+    final approvals = _context.read<ToolApprovalService>();
+    final questions = _context.read<AskUserInteractionService>();
+    try {
+      final assistants = _context.read<AssistantProvider>();
+      final assistant = assistantId.isEmpty
+          ? assistants.currentAssistant
+          : assistants.getById(assistantId);
+      if (assistant == null) {
+        return {
+          'error': 'assistant_missing',
+          'message': "No assistant matches '$assistantId'.",
+        };
+      }
+      final trimmedTitle = (title ?? '').trim();
+      final conversation = await _chatService.createConversation(
+        title: trimmedTitle.isEmpty ? null : trimmedTitle,
+        assistantId: assistant.id,
+        activate: false,
+      );
+      final result = await _viewModel.sendScheduledMessage(
+        input: ChatInputData(text: prompt),
+        conversation: conversation,
+        assistant: assistant,
+        scheduledNotify: false,
+        scheduledPreview: false,
+      );
+      if (!result.success) {
+        return {
+          'conversation_id': conversation.id,
+          'status': 'failed',
+          'error': result.errorMessage ?? 'generation_failed',
+        };
+      }
+      if (!wait) {
+        return {
+          'conversation_id': conversation.id,
+          'status': 'started',
+          if (result.assistantMessage != null)
+            'message_id': result.assistantMessage!.id,
+          'note':
+              'The subtask is running in the background. The user can open '
+              'this conversation to watch it; its tool approvals still '
+              'require user confirmation.',
+        };
+      }
+      final runId = result.generationRunId;
+      if (runId == null) {
+        return {
+          'conversation_id': conversation.id,
+          'status': 'failed',
+          'error': 'generation_run_missing',
+        };
+      }
+      final repository = _chatService.chatRepositoryOrNull;
+      if (repository == null) {
+        return {
+          'conversation_id': conversation.id,
+          'status': 'failed',
+          'error': 'repository_missing',
+        };
+      }
+      final deadline = DateTime.now().add(const Duration(minutes: 5));
+      while (true) {
+        final run = await repository.getGenerationRun(runId);
+        if (run == null) {
+          return {
+            'conversation_id': conversation.id,
+            'status': 'failed',
+            'error': 'generation_run_missing',
+          };
+        }
+        if (run.state.isTerminal) {
+          final message = await repository.getMessage(
+            result.assistantMessage?.id ?? '',
+          );
+          return {
+            'conversation_id': conversation.id,
+            'status': run.state == GenerationRunState.completed
+                ? 'completed'
+                : 'failed',
+            'reply': truncateSubtaskReply(message?.content ?? ''),
+            if (run.errorCode != null) 'error': run.errorCode,
+          };
+        }
+        if (approvals.pendingRequests.any(
+              (r) => r.conversationId == conversation.id,
+            ) ||
+            questions.pendingRequests.values.any(
+              (r) => r.conversationId == conversation.id,
+            )) {
+          return {
+            'conversation_id': conversation.id,
+            'status': 'needs_input',
+            'error': 'user_interaction_required',
+            'note':
+                'The subtask is paused on a tool approval or question. '
+                'Confirm it in the UI; the conversation can be read later '
+                'for the outcome.',
+          };
+        }
+        if (DateTime.now().isAfter(deadline)) {
+          return {
+            'conversation_id': conversation.id,
+            'status': 'timeout',
+            'error': 'execution_timeout',
+          };
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 500));
+      }
+    } catch (error) {
+      return {'error': 'subtask_failed', 'message': '$error'};
     }
   }
 

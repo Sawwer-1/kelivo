@@ -111,6 +111,10 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
   late List<ScheduledTaskStep> steps =
       List<ScheduledTaskStep>.of(widget.task?.steps ?? const []);
   late bool workflowMode = steps.isNotEmpty;
+  // Step text fields keep stable controllers owned by the page (created in
+  // build they would leak on every rebuild and lose the cursor position).
+  final List<TextEditingController> _stepPromptCtrls = [];
+  final List<TextEditingController> _stepFixedCtrls = [];
   String? messagePreview;
   String? error;
   bool busy = false;
@@ -124,7 +128,27 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
   @override
   void initState() {
     super.initState();
+    _syncStepCtrls();
     if (messageId != null) unawaited(_loadMessagePreview());
+  }
+
+  /// Keeps the step text controllers aligned with [steps] (grow/shrink only —
+  /// in-place step edits never recreate controllers).
+  void _syncStepCtrls() {
+    while (_stepPromptCtrls.length > steps.length) {
+      _stepPromptCtrls.removeLast().dispose();
+    }
+    while (_stepFixedCtrls.length > steps.length) {
+      _stepFixedCtrls.removeLast().dispose();
+    }
+    while (_stepPromptCtrls.length < steps.length) {
+      _stepPromptCtrls
+          .add(TextEditingController(text: steps[_stepPromptCtrls.length].prompt));
+    }
+    while (_stepFixedCtrls.length < steps.length) {
+      _stepFixedCtrls
+          .add(TextEditingController(text: steps[_stepFixedCtrls.length].fixedText));
+    }
   }
 
   Future<void> _loadMessagePreview() async {
@@ -150,6 +174,9 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
     name.dispose();
     prompt.dispose();
     preparationPrompt.dispose();
+    for (final c in [..._stepPromptCtrls, ..._stepFixedCtrls]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -467,7 +494,10 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
                     tooltip: l.scheduledTasksDelete,
                     icon: const Icon(LucideIcons.trash2, size: 16),
                     onPressed: () => setState(
-                      () => steps = [...steps]..removeAt(index),
+                      () {
+                        steps = [...steps]..removeAt(index);
+                        _syncStepCtrls();
+                      },
                     ),
                   ),
               ],
@@ -515,7 +545,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
               ),
             const SizedBox(height: 8),
             TextField(
-              controller: TextEditingController(text: step.prompt),
+              controller: _stepPromptCtrls[index],
               minLines: 2,
               maxLines: 6,
               style: const TextStyle(fontSize: 13),
@@ -538,7 +568,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
                 index > 0) ...[
               const SizedBox(height: 8),
               TextField(
-                controller: TextEditingController(text: step.fixedText),
+                controller: _stepFixedCtrls[index],
                 minLines: 1,
                 maxLines: 4,
                 style: const TextStyle(fontSize: 13),
@@ -737,6 +767,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
                 if (v && steps.isEmpty) {
                   steps = [const ScheduledTaskStep(prompt: '')];
                 }
+                _syncStepCtrls();
               }),
             ),
             if (workflowMode) ...[
@@ -750,6 +781,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
                       source: ScheduledTaskStepSource.previousOutput,
                     ),
                   ];
+                  _syncStepCtrls();
                 }),
                 icon: const Icon(LucideIcons.plus, size: 16),
                 label: Text(l.scheduledTasksAddStep),

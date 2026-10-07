@@ -6595,6 +6595,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
+  String get assistantEditLocalToolSpawnSubtaskTitle => '派生子任务';
   String get settingsPageSshHosts => 'SSH 主机';
   String get sshHostsDescription => 'SSH 工具的保存主机档案。密码经 Windows DPAPI 密封存储，模型只见档案名称。';
   String get sshHostsEmpty => '还没有保存的主机，点右上角 + 添加。';
@@ -18979,6 +18980,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
+  String get assistantEditLocalToolSpawnSubtaskTitle => '派生子任务';
   String get settingsPageSshHosts => 'SSH 主机';
   String get sshHostsDescription => 'SSH 工具的保存主机档案。密码经 Windows DPAPI 密封存储，模型只见档案名称。';
   String get sshHostsEmpty => '还没有保存的主机，点右上角 + 添加。';
@@ -31408,6 +31410,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get assistantEditLocalToolSshExecTitle => 'SSH：執行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上傳檔案';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下載檔案';
+  String get assistantEditLocalToolSpawnSubtaskTitle => '派生子任務';
   String get settingsPageSshHosts => 'SSH 主機';
   String get sshHostsDescription => 'SSH 工具的儲存主機檔案。密碼經 Windows DPAPI 密封儲存，模型只見檔案名稱。';
   String get sshHostsEmpty => '還沒有儲存的主機，點右上角 + 新增。';

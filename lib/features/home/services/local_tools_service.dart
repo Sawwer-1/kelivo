@@ -12,6 +12,7 @@ import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/memory_provider_v2.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../core/services/agents/subtask_service.dart';
 import '../../../core/services/ssh/ssh_tools_service.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import 'owner_control_tools_service.dart';
@@ -62,6 +63,7 @@ class LocalToolNames {
   static const String sshExec = 'ssh_exec';
   static const String sshUpload = 'ssh_upload';
   static const String sshDownload = 'ssh_download';
+  static const String spawnSubtask = 'spawn_subtask';
   static const String ownerDreamView = 'owner_dream_view';
 
   // G3: fetch a public web page and return its readable text. Read-only,
@@ -101,6 +103,7 @@ class LocalToolNames {
     sshExec,
     sshUpload,
     sshDownload,
+    spawnSubtask,
     ownerDreamView,
     webExtract,
   ];
@@ -126,6 +129,7 @@ class LocalToolNames {
     sshExec,
     sshUpload,
     sshDownload,
+    spawnSubtask,
     ownerDreamView,
   ];
 }
@@ -595,6 +599,8 @@ class LocalToolsService {
         return SshToolsService.sshUploadDefinition;
       case LocalToolNames.sshDownload:
         return SshToolsService.sshDownloadDefinition;
+      case LocalToolNames.spawnSubtask:
+        return SubtaskService.spawnSubtaskDefinition;
       case LocalToolNames.ownerDreamView:
         return OwnerControlTools.ownerDreamViewDefinition;
       case LocalToolNames.webExtract:
@@ -702,6 +708,9 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.sshDownload) {
       return SshToolsService.download(args);
+    }
+    if (name == LocalToolNames.spawnSubtask) {
+      return SubtaskService.handleSpawnSubtask(args);
     }
     if (name == LocalToolNames.ownerDreamView) {
       return OwnerControlTools.handleDreamView(ownerContext);

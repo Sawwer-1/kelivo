@@ -112,8 +112,13 @@ class ScheduledTask {
       scheduleRevision;
   final List<ScheduledTaskStep> steps;
 
+  // Steps tasks cannot use the preparation pipeline: it pre-generates only
+  // the first message and publishes it directly, bypassing the runner — the
+  // remaining steps would never execute.
   bool get canPrepare =>
-      allowPreparation && mode != ScheduledTaskMode.regenerate;
+      allowPreparation &&
+      mode != ScheduledTaskMode.regenerate &&
+      steps.isEmpty;
 
   ScheduledTaskRepeat get repeat {
     if (onceDate != null) return ScheduledTaskRepeat.once;
@@ -167,6 +172,10 @@ class ScheduledTask {
     preparationCooldownMinutes: preparationCooldownMinutes,
     revision: revision ?? this.revision,
     scheduleRevision: scheduleRevision ?? this.scheduleRevision,
+    // Carry the workflow steps through state updates; dropping them here
+    // would silently strip the chain the first time the executor re-arms
+    // or records a run on the task.
+    steps: steps,
   );
 
   factory ScheduledTask.fromJson(Map<String, dynamic> json) => ScheduledTask(

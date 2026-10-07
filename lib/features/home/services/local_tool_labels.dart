@@ -78,6 +78,8 @@ IconData localToolIcon(String id) {
       return Lucide.Upload;
     case LocalToolNames.sshDownload:
       return Lucide.Download;
+    case LocalToolNames.spawnSubtask:
+      return Lucide.Bot;
     case LocalToolNames.ownerDreamView:
       return Lucide.Sparkles;
     default:
@@ -151,6 +153,8 @@ String localToolTitle(AppLocalizations l10n, String id) {
       return l10n.assistantEditLocalToolSshUploadTitle;
     case LocalToolNames.sshDownload:
       return l10n.assistantEditLocalToolSshDownloadTitle;
+    case LocalToolNames.spawnSubtask:
+      return l10n.assistantEditLocalToolSpawnSubtaskTitle;
     case LocalToolNames.ownerDreamView:
       return l10n.ownerToolDreamViewTitle;
     default:

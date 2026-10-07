@@ -12591,6 +12591,9 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SSH: download file'**
   String get assistantEditLocalToolSshDownloadTitle;
+
+  /// Title for the spawn subtask local tool.
+  String get assistantEditLocalToolSpawnSubtaskTitle;
   /// No description provided for @settingsPageSshHosts.
   ///
   /// In en, this message translates to:

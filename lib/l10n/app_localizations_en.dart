@@ -6866,6 +6866,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantEditLocalToolSshExecTitle => 'SSH: run command';
   String get assistantEditLocalToolSshUploadTitle => 'SSH: upload file';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH: download file';
+
+  @override
+  String get assistantEditLocalToolSpawnSubtaskTitle => 'Spawn subtask';
   String get settingsPageSshHosts => 'SSH hosts';
   String get sshHostsDescription => 'Saved profiles for the SSH tools. Passwords are sealed with Windows DPAPI; the model only sees the profile name.';
   String get sshHostsEmpty => 'No saved hosts yet. Click + to add one.';

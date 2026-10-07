@@ -2876,6 +2876,7 @@
   "assistantEditLocalToolSshExecTitle": "SSH: run command",
   "assistantEditLocalToolSshUploadTitle": "SSH: upload file",
   "assistantEditLocalToolSshDownloadTitle": "SSH: download file",
+  "assistantEditLocalToolSpawnSubtaskTitle": "Spawn subtask",
   "settingsPageSshHosts": "SSH hosts",
   "sshHostsDescription": "Saved profiles for the SSH tools. Passwords are sealed with Windows DPAPI; the model only sees the profile name.",
   "sshHostsEmpty": "No saved hosts yet. Click + to add one.",

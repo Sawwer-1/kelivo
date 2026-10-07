@@ -660,18 +660,38 @@ class OwnerControlTools {
   // through MemoryProviderV2 so the UI caches stay in sync.
 
   /// G5: optional workflow steps for owner_task_create. Each entry is a map
-  /// with prompt (required), source (fixedText|previousOutput, default
-  /// fixedText), fixed_text, and optional model_provider/model_id. Structural
-  /// validation happens in validateScheduledTask on save.
+  /// with prompt (required), source (fixed_text|previous_output, default
+  /// fixed_text), fixed_text, and optional model_provider/model_id. The tool
+  /// schema declares snake_case keys (matching the rest of this tool family),
+  /// but camelCase variants are accepted as a fallback since the model may
+  /// echo either form. Structural validation happens in validateScheduledTask
+  /// on save.
   static List<ScheduledTaskStep> _parseSteps(Object? raw) {
     if (raw is! List || raw.isEmpty) return const <ScheduledTaskStep>[];
+    String? pick(Map<dynamic, dynamic> map, String snake, String camel) {
+      final value = map[snake] ?? map[camel];
+      return value == null ? null : '$value'.trim();
+    }
+
     return [
       for (final item in raw)
         if (item is Map)
-          ScheduledTaskStep.fromJson(
-            Map<String, dynamic>.from(item),
+          ScheduledTaskStep(
+            prompt: pick(item, 'prompt', 'prompt') ?? '',
+            source: _stepSourceArg(pick(item, 'source', 'source')),
+            fixedText: pick(item, 'fixed_text', 'fixedText') ?? '',
+            modelProvider: pick(item, 'model_provider', 'modelProvider'),
+            modelId: pick(item, 'model_id', 'modelId'),
           ),
     ];
+  }
+
+  /// Accepts both the schema's snake_case and the storage camelCase form.
+  static ScheduledTaskStepSource _stepSourceArg(String? raw) {
+    final normalized = (raw ?? 'fixed_text').toLowerCase().replaceAll('_', '');
+    return normalized == 'previousoutput'
+        ? ScheduledTaskStepSource.previousOutput
+        : ScheduledTaskStepSource.fixedText;
   }
 
   static Map<String, dynamic> _memoryRow(MemoryEntry e) => {
@@ -1048,6 +1068,49 @@ class OwnerControlTools {
             'items': {'type': 'integer'},
             'description':
                 'Repeating days as integers 1 (Monday) through 7 (Sunday).',
+          },
+          'steps': {
+            'type': 'array',
+            'description':
+                'Optional workflow steps executed in order in the same '
+                'conversation (max 10). Each step combines its prompt with '
+                'its input source: the previous step\'s assistant reply or '
+                'fixed_text. Any failed step stops the chain.',
+            'items': {
+              'type': 'object',
+              'properties': {
+                'prompt': {
+                  'type': 'string',
+                  'description': 'This step\'s instruction (max 16000 chars).',
+                },
+                'source': {
+                  'type': 'string',
+                  'enum': ['fixed_text', 'previous_output'],
+                  'description':
+                      "Input source. 'fixed_text' (default) uses fixed_text "
+                      "as the step input; 'previous_output' prepends the "
+                      "previous step's reply. The first step must be "
+                      'fixed_text.',
+                },
+                'fixed_text': {
+                  'type': 'string',
+                  'description':
+                      "Required when source is 'fixed_text' (the text sent "
+                      'before prompt).',
+                },
+                'model_provider': {
+                  'type': 'string',
+                  'description':
+                      'Optional step-level model override (provider key). '
+                      'Must be paired with model_id.',
+                },
+                'model_id': {
+                  'type': 'string',
+                  'description': 'Optional step-level model id.',
+                },
+              },
+              'required': ['prompt'],
+            },
           },
           'mode': {
             'type': 'string',

@@ -2344,6 +2344,7 @@
   "assistantEditLocalToolSshExecTitle": "SSH：執行命令",
   "assistantEditLocalToolSshUploadTitle": "SSH：上傳檔案",
   "assistantEditLocalToolSshDownloadTitle": "SSH：下載檔案",
+  "assistantEditLocalToolSpawnSubtaskTitle": "派生子任務",
   "settingsPageSshHosts": "SSH 主機",
   "sshHostsDescription": "SSH 工具的儲存主機檔案。密碼經 Windows DPAPI 密封儲存，模型只見檔案名稱。",
   "sshHostsEmpty": "還沒有儲存的主機，點右上角 + 新增。",
