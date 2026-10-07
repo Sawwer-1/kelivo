@@ -6837,6 +6837,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ownerToolListProvidersTitle => 'Owner: list providers';
 
   @override
+  String get ownerToolSettingsGetTitle => 'Owner: get settings';
+
+  @override
+  String get ownerToolSettingsSetTitle => 'Owner: set settings';
+
+  @override
+  String get ownerToolTaskListTitle => 'Owner: list scheduled tasks';
+
+  @override
+  String get ownerToolTaskCreateTitle => 'Owner: create scheduled task';
+
+  @override
+  String get ownerToolTaskDeleteTitle => 'Owner: delete scheduled task';
+
+  @override
+  String get ownerToolLearningCallTitle => 'Owner: learning gateway call';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       'Mark a reminder as done with your confirmation, requires full reminders access.';
 

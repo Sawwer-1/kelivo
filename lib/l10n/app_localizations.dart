@@ -12481,6 +12481,42 @@ abstract class AppLocalizations {
   /// **'Owner: list providers'**
   String get ownerToolListProvidersTitle;
 
+  /// No description provided for @ownerToolSettingsGetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: get settings'**
+  String get ownerToolSettingsGetTitle;
+
+  /// No description provided for @ownerToolSettingsSetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: set settings'**
+  String get ownerToolSettingsSetTitle;
+
+  /// No description provided for @ownerToolTaskListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: list scheduled tasks'**
+  String get ownerToolTaskListTitle;
+
+  /// No description provided for @ownerToolTaskCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: create scheduled task'**
+  String get ownerToolTaskCreateTitle;
+
+  /// No description provided for @ownerToolTaskDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: delete scheduled task'**
+  String get ownerToolTaskDeleteTitle;
+
+  /// No description provided for @ownerToolLearningCallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: learning gateway call'**
+  String get ownerToolLearningCallTitle;
+
   /// No description provided for @assistantEditLocalToolRemindersCompleteSubtitle.
   ///
   /// In en, this message translates to:

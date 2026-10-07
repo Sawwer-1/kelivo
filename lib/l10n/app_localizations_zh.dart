@@ -6566,6 +6566,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ownerToolListProvidersTitle => 'Owner：服务商列表';
 
   @override
+  String get ownerToolSettingsGetTitle => 'Owner：读取设置';
+
+  @override
+  String get ownerToolSettingsSetTitle => 'Owner：修改设置';
+
+  @override
+  String get ownerToolTaskListTitle => 'Owner：计划任务列表';
+
+  @override
+  String get ownerToolTaskCreateTitle => 'Owner：新建计划任务';
+
+  @override
+  String get ownerToolTaskDeleteTitle => 'Owner：删除计划任务';
+
+  @override
+  String get ownerToolLearningCallTitle => 'Owner：学习网关调用';
+
+  @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
       '在你确认后将提醒事项标记为完成，需要授予提醒事项完整访问权限。';
 
@@ -18860,6 +18878,24 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get ownerToolListProvidersTitle => 'Owner：服务商列表';
+
+  @override
+  String get ownerToolSettingsGetTitle => 'Owner：读取设置';
+
+  @override
+  String get ownerToolSettingsSetTitle => 'Owner：修改设置';
+
+  @override
+  String get ownerToolTaskListTitle => 'Owner：计划任务列表';
+
+  @override
+  String get ownerToolTaskCreateTitle => 'Owner：新建计划任务';
+
+  @override
+  String get ownerToolTaskDeleteTitle => 'Owner：删除计划任务';
+
+  @override
+  String get ownerToolLearningCallTitle => 'Owner：学习网关调用';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
@@ -31201,6 +31237,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get ownerToolListProvidersTitle => 'Owner：服務商列表';
+
+  @override
+  String get ownerToolSettingsGetTitle => 'Owner：讀取設定';
+
+  @override
+  String get ownerToolSettingsSetTitle => 'Owner：修改設定';
+
+  @override
+  String get ownerToolTaskListTitle => 'Owner：排程任務清單';
+
+  @override
+  String get ownerToolTaskCreateTitle => 'Owner：新增排程任務';
+
+  @override
+  String get ownerToolTaskDeleteTitle => 'Owner：刪除排程任務';
+
+  @override
+  String get ownerToolLearningCallTitle => 'Owner：學習閘道呼叫';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>

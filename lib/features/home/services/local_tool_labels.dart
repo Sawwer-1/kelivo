@@ -52,6 +52,18 @@ IconData localToolIcon(String id) {
       return Lucide.Bot;
     case LocalToolNames.ownerListProviders:
       return Lucide.Database;
+    case LocalToolNames.ownerSettingsGet:
+      return Lucide.Settings;
+    case LocalToolNames.ownerSettingsSet:
+      return Lucide.Settings2;
+    case LocalToolNames.ownerTaskList:
+      return Lucide.Calendar;
+    case LocalToolNames.ownerTaskCreate:
+      return Lucide.CalendarPlus;
+    case LocalToolNames.ownerTaskDelete:
+      return Lucide.Trash2;
+    case LocalToolNames.ownerLearningCall:
+      return Lucide.BookOpen;
     default:
       return Lucide.Wrench;
   }
@@ -97,6 +109,18 @@ String localToolTitle(AppLocalizations l10n, String id) {
       return l10n.ownerToolListAssistantsTitle;
     case LocalToolNames.ownerListProviders:
       return l10n.ownerToolListProvidersTitle;
+    case LocalToolNames.ownerSettingsGet:
+      return l10n.ownerToolSettingsGetTitle;
+    case LocalToolNames.ownerSettingsSet:
+      return l10n.ownerToolSettingsSetTitle;
+    case LocalToolNames.ownerTaskList:
+      return l10n.ownerToolTaskListTitle;
+    case LocalToolNames.ownerTaskCreate:
+      return l10n.ownerToolTaskCreateTitle;
+    case LocalToolNames.ownerTaskDelete:
+      return l10n.ownerToolTaskDeleteTitle;
+    case LocalToolNames.ownerLearningCall:
+      return l10n.ownerToolLearningCallTitle;
     default:
       return id;
   }

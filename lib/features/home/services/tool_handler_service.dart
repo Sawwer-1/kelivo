@@ -564,6 +564,7 @@ class ToolHandlerService {
             chatService: contextProvider.read<ChatService>(),
             assistantProvider: assistantProvider,
             settings: settings,
+            mcpProvider: mcp,
           );
         } catch (_) {
           ownerContext = null;

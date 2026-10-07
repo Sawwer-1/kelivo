@@ -8,8 +8,10 @@ import 'package:math_expressions/math_expressions.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/models/health_data_type.dart';
 import '../../../core/providers/assistant_provider.dart';
+import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import 'owner_control_tools_service.dart';
 import 'web_extract_service.dart';
 
 typedef TextToSpeechStarter = Future<void> Function(String text);
@@ -41,6 +43,16 @@ class LocalToolNames {
   static const String ownerListAssistants = 'owner_list_assistants';
   static const String ownerListProviders = 'owner_list_providers';
 
+  // C3 phase 2: owner write tools (settings / scheduled tasks / learning
+  // gateway pass-through). They mutate user-visible state and are therefore
+  // always approval-gated; see [OwnerControlTools] for the whitelists.
+  static const String ownerSettingsGet = 'owner_settings_get';
+  static const String ownerSettingsSet = 'owner_settings_set';
+  static const String ownerTaskList = 'owner_task_list';
+  static const String ownerTaskCreate = 'owner_task_create';
+  static const String ownerTaskDelete = 'owner_task_delete';
+  static const String ownerLearningCall = 'owner_learning_call';
+
   // G3: fetch a public web page and return its readable text. Read-only,
   // egress-guarded (private/loopback targets are rejected).
   static const String webExtract = 'web_extract';
@@ -65,6 +77,12 @@ class LocalToolNames {
     ownerReadConversation,
     ownerListAssistants,
     ownerListProviders,
+    ownerSettingsGet,
+    ownerSettingsSet,
+    ownerTaskList,
+    ownerTaskCreate,
+    ownerTaskDelete,
+    ownerLearningCall,
     webExtract,
   ];
 
@@ -76,22 +94,31 @@ class LocalToolNames {
     ownerReadConversation,
     ownerListAssistants,
     ownerListProviders,
+    ownerSettingsGet,
+    ownerSettingsSet,
+    ownerTaskList,
+    ownerTaskCreate,
+    ownerTaskDelete,
+    ownerLearningCall,
   ];
 }
 
 /// Read-only data sources for the owner_* local tools (C3 phase 1). Passed
 /// in per call so [LocalToolsService] stays decoupled from providers it
-/// does not otherwise need.
+/// does not otherwise need. Phase 2 adds the MCP provider so the learning
+/// gateway pass-through can reuse the existing connection pool.
 class OwnerToolContext {
   const OwnerToolContext({
     this.chatService,
     this.assistantProvider,
     this.settings,
+    this.mcpProvider,
   });
 
   final ChatService? chatService;
   final AssistantProvider? assistantProvider;
   final SettingsProvider? settings;
+  final McpProvider? mcpProvider;
 }
 
 class PhoneControlStatus {
@@ -513,6 +540,18 @@ class LocalToolsService {
         return _ownerListAssistantsDefinition;
       case LocalToolNames.ownerListProviders:
         return _ownerListProvidersDefinition;
+      case LocalToolNames.ownerSettingsGet:
+        return OwnerControlTools.ownerSettingsGetDefinition;
+      case LocalToolNames.ownerSettingsSet:
+        return OwnerControlTools.ownerSettingsSetDefinition;
+      case LocalToolNames.ownerTaskList:
+        return OwnerControlTools.ownerTaskListDefinition;
+      case LocalToolNames.ownerTaskCreate:
+        return OwnerControlTools.ownerTaskCreateDefinition;
+      case LocalToolNames.ownerTaskDelete:
+        return OwnerControlTools.ownerTaskDeleteDefinition;
+      case LocalToolNames.ownerLearningCall:
+        return OwnerControlTools.ownerLearningCallDefinition;
       case LocalToolNames.webExtract:
         return _webExtractDefinition;
       default:
@@ -579,6 +618,24 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.ownerListProviders) {
       return _handleOwnerListProviders(ownerContext);
+    }
+    if (name == LocalToolNames.ownerSettingsGet) {
+      return OwnerControlTools.handleSettingsGet(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerSettingsSet) {
+      return OwnerControlTools.handleSettingsSet(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerTaskList) {
+      return OwnerControlTools.handleTaskList(ownerContext);
+    }
+    if (name == LocalToolNames.ownerTaskCreate) {
+      return OwnerControlTools.handleTaskCreate(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerTaskDelete) {
+      return OwnerControlTools.handleTaskDelete(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerLearningCall) {
+      return OwnerControlTools.handleLearningCall(args, ownerContext);
     }
     if (name == LocalToolNames.webExtract) {
       return WebExtractService.extract(args);
