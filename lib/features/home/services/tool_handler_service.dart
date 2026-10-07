@@ -565,6 +565,7 @@ class ToolHandlerService {
             assistantProvider: assistantProvider,
             settings: settings,
             mcpProvider: mcp,
+            memoryProvider: contextProvider.read<MemoryProviderV2>(),
           );
         } catch (_) {
           ownerContext = null;

@@ -6853,6 +6853,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ownerToolLearningCallTitle => 'Owner: learning gateway call';
+  String get ownerToolMcpListTitle => 'Owner: MCP server list';
+  String get ownerToolMcpToggleTitle => 'Owner: toggle MCP server';
+  String get ownerToolMemoryListTitle => 'Owner: memory list';
+  String get ownerToolMemoryWriteTitle => 'Owner: memory write';
+  String get messageMoreSheetContinueOverwriteTitle => 'Continue generation';
+  String get messageMoreSheetContinueOverwriteBody => 'This message already has content. Continuing will regenerate it from scratch and replace the current text.';
+  String get messageMoreSheetContinueOverwriteConfirm => 'Regenerate';
+  String get messageMoreSheetContinueOverwriteCancel => 'Cancel';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>

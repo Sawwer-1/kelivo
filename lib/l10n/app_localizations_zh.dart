@@ -6582,6 +6582,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ownerToolLearningCallTitle => 'Owner：学习网关调用';
+  String get ownerToolMcpListTitle => 'Owner：MCP 服务器列表';
+  String get ownerToolMcpToggleTitle => 'Owner：启用/禁用 MCP 服务器';
+  String get ownerToolMemoryListTitle => 'Owner：记忆列表';
+  String get ownerToolMemoryWriteTitle => 'Owner：记忆写入';
+  String get messageMoreSheetContinueOverwriteTitle => '继续生成';
+  String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
+  String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
+  String get messageMoreSheetContinueOverwriteCancel => '取消';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
@@ -18896,6 +18904,14 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get ownerToolLearningCallTitle => 'Owner：学习网关调用';
+  String get ownerToolMcpListTitle => 'Owner：MCP 服务器列表';
+  String get ownerToolMcpToggleTitle => 'Owner：启用/禁用 MCP 服务器';
+  String get ownerToolMemoryListTitle => 'Owner：记忆列表';
+  String get ownerToolMemoryWriteTitle => 'Owner：记忆写入';
+  String get messageMoreSheetContinueOverwriteTitle => '继续生成';
+  String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
+  String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
+  String get messageMoreSheetContinueOverwriteCancel => '取消';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>
@@ -31255,6 +31271,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get ownerToolLearningCallTitle => 'Owner：學習閘道呼叫';
+  String get ownerToolMcpListTitle => 'Owner：MCP 伺服器清單';
+  String get ownerToolMcpToggleTitle => 'Owner：啟用/停用 MCP 伺服器';
+  String get ownerToolMemoryListTitle => 'Owner：記憶清單';
+  String get ownerToolMemoryWriteTitle => 'Owner：記憶寫入';
+  String get messageMoreSheetContinueOverwriteTitle => '繼續生成';
+  String get messageMoreSheetContinueOverwriteBody => '該訊息已有內容，繼續將從頭重新生成本條並覆蓋現有內容。';
+  String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
+  String get messageMoreSheetContinueOverwriteCancel => '取消';
 
   @override
   String get assistantEditLocalToolRemindersCompleteSubtitle =>

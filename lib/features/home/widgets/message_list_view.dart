@@ -2421,7 +2421,45 @@ class _MessageListViewState extends State<MessageListView> {
         } else if (action == MessageMoreAction.edit) {
           widget.onEditMessage?.call(message);
         } else if (action == MessageMoreAction.continueGeneration) {
-          await widget.onContinueMessage?.call(message);
+          // D2: continuing re-generates the message from an empty content
+          // slot, so an existing body would be overwritten. Interrupted or
+          // failed messages are empty and proceed silently; a message with
+          // content gets an explicit confirmation first.
+          if (!context.mounted) return;
+          var proceed = message.content.trim().isEmpty;
+          if (!proceed) {
+            final l10n = AppLocalizations.of(context)!;
+            proceed =
+                await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(
+                      l10n.messageMoreSheetContinueOverwriteTitle,
+                    ),
+                    content: Text(
+                      l10n.messageMoreSheetContinueOverwriteBody,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(dialogContext).pop(false),
+                        child: Text(
+                          l10n.messageMoreSheetContinueOverwriteCancel,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.of(dialogContext).pop(true),
+                        child: Text(
+                          l10n.messageMoreSheetContinueOverwriteConfirm,
+                        ),
+                      ),
+                    ],
+                  ),
+                ) ??
+                false;
+          }
+          if (proceed) await widget.onContinueMessage?.call(message);
         } else if (action == MessageMoreAction.fork) {
           await widget.onForkConversation?.call(message);
         } else if (action == MessageMoreAction.share) {

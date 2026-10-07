@@ -4,8 +4,10 @@ import 'package:flutter/material.dart' show Locale, ThemeMode;
 import 'package:mcp_client/mcp_client.dart' as mcp;
 import 'package:uuid/uuid.dart';
 
+import '../../../core/models/memory_entry.dart';
 import '../../../core/models/scheduled_task.dart';
 import '../../../core/providers/assistant_provider.dart';
+import '../../../core/providers/memory_provider_v2.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/scheduled_tasks_service.dart';
 import '../../../utils/utf16_safe_cut.dart';
@@ -559,6 +561,281 @@ class OwnerControlTools {
   }
 
   // ---------------------------------------------------------------------------
+  // MCP server family (C3 phase 3). Structural info only — headers, env and
+  // OAuth state may carry credentials and are never returned.
+
+  static Future<String> handleMcpList(OwnerToolContext? ownerContext) async {
+    final mcp = ownerContext?.mcpProvider;
+    if (mcp == null) return _ownerUnavailable();
+    return jsonEncode({
+      'servers': [
+        for (final s in mcp.servers)
+          {
+            'id': s.id,
+            'name': s.name,
+            'transport': s.transport.name,
+            'enabled': s.enabled,
+            'connected': mcp.isConnected(s.id),
+            'tools_enabled': s.tools.where((t) => t.enabled).length,
+            'tools_total': s.tools.length,
+            if (s.transport.name == 'stdio') 'command': s.command,
+            if (s.transport.name != 'stdio' && s.url.isNotEmpty)
+              'url': s.url,
+          },
+      ],
+    });
+  }
+
+  static Future<String> handleMcpToggle(
+    Map<String, dynamic> args,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final mcp = ownerContext?.mcpProvider;
+    if (mcp == null) return _ownerUnavailable();
+    final key = '${args['server'] ?? ''}'.trim();
+    if (key.isEmpty) {
+      return _error('missing_argument', 'server is required.');
+    }
+    final enabled = args['enabled'];
+    if (enabled is! bool) {
+      return _error('missing_argument', 'enabled must be true or false.');
+    }
+    final server = mcp.servers
+        .where((candidate) => candidate.id == key || candidate.name == key)
+        .firstOrNull;
+    if (server == null) {
+      return _error('not_found', "No MCP server matches '$key'.");
+    }
+    if (server.enabled == enabled) {
+      return jsonEncode({
+        'ok': true,
+        'id': server.id,
+        'name': server.name,
+        'enabled': server.enabled,
+        'connected': mcp.isConnected(server.id),
+        'note': 'already in the requested state',
+      });
+    }
+    // updateServer persists the flag, disconnects when disabling and
+    // reconnects in the background when enabling.
+    await mcp.updateServer(server.copyWith(enabled: enabled));
+    return jsonEncode({
+      'ok': true,
+      'id': server.id,
+      'name': server.name,
+      'enabled': enabled,
+      'connected': mcp.isConnected(server.id),
+      'note': enabled
+          ? 'server enabled; the connection is being established in the '
+                'background and may take a few seconds'
+          : 'server disabled and disconnected',
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Memory family (C3 phase 3). Reads go through the typed-column read path
+  // (queryAllMemories) so archived entries can be listed too; writes go
+  // through MemoryProviderV2 so the UI caches stay in sync.
+
+  static Map<String, dynamic> _memoryRow(MemoryEntry e) => {
+    'id': e.id,
+    'scope': MemoryEntry.scopeToString(e.scope),
+    'assistant_id': e.assistantId,
+    'conversation_id': e.conversationId,
+    'type': MemoryEntry.typeToString(e.type),
+    'status': e.status.name,
+    'content': e.content.length > 200
+        ? '${truncateHeadUtf16Safe(e.content, 200)}…[truncated]'
+        : e.content,
+    'created_at': e.createdAt.toIso8601String(),
+    'updated_at': e.updatedAt.toIso8601String(),
+  };
+
+  static Future<String> handleMemoryList(
+    Map<String, dynamic> args,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final memory = ownerContext?.memoryProvider;
+    if (memory == null) return _ownerUnavailable();
+    final includeArchived = args['include_archived'] is bool
+        ? args['include_archived'] as bool
+        : false;
+    final limit = _intArg(args['limit']) ?? 50;
+    if (limit < 1 || limit > 100) {
+      return _error('invalid_value', 'limit must be between 1 and 100.');
+    }
+    final all = await memory.chatRepository.queryAllMemories(
+      includeArchived: includeArchived,
+    );
+    return jsonEncode({
+      'total': all.length,
+      'truncated': all.length > limit,
+      'entries': [for (final e in all.take(limit)) _memoryRow(e)],
+    });
+  }
+
+  static Future<String> handleMemoryWrite(
+    Map<String, dynamic> args,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final memory = ownerContext?.memoryProvider;
+    if (memory == null) return _ownerUnavailable();
+    final action = '${args['action'] ?? ''}'.trim();
+    final memoryId = '${args['memory_id'] ?? ''}'.trim();
+
+    switch (action) {
+      case 'create':
+        return _memoryCreate(args, memory, ownerContext);
+      case 'update_content':
+        final content = '${args['content'] ?? ''}'.trim();
+        if (content.isEmpty) {
+          return _error('missing_argument', 'content is required.');
+        }
+        if (content.length > 2000) {
+          return _error(
+            'invalid_value',
+            'content must be at most 2000 characters.',
+          );
+        }
+        final updated = await memory.updateContent(memoryId, content);
+        if (updated == null) {
+          return _error('not_found', "No memory with id '$memoryId'.");
+        }
+        return jsonEncode({'ok': true, 'entry': _memoryRow(updated)});
+      case 'update_type':
+        final type = _memoryTypeArg(args['type']);
+        if (type == null) {
+          return _error(
+            'invalid_value',
+            'type must be one of: identity, workflow, voice, instruction.',
+          );
+        }
+        final updated = await memory.updateType(memoryId, type);
+        if (updated == null) {
+          return _error('not_found', "No memory with id '$memoryId'.");
+        }
+        return jsonEncode({'ok': true, 'entry': _memoryRow(updated)});
+      case 'archive':
+      case 'restore':
+        if (memoryId.isEmpty) {
+          return _error('missing_argument', 'memory_id is required.');
+        }
+        final ok = action == 'archive'
+            ? await memory.archive(memoryId)
+            : await memory.restore(memoryId);
+        if (!ok) {
+          return _error('not_found', "No memory with id '$memoryId'.");
+        }
+        return jsonEncode({'ok': true, 'action': action, 'id': memoryId});
+      case 'delete':
+        if (memoryId.isEmpty) {
+          return _error('missing_argument', 'memory_id is required.');
+        }
+        final ok = await memory.hardDelete(memoryId);
+        if (!ok) {
+          return _error('not_found', "No memory with id '$memoryId'.");
+        }
+        return jsonEncode({'ok': true, 'deleted': memoryId});
+      default:
+        return _error(
+          'invalid_action',
+          'action must be create, update_content, update_type, archive, '
+              'restore or delete.',
+        );
+    }
+  }
+
+  static MemoryType? _memoryTypeArg(Object? raw) {
+    switch ('${raw ?? ''}'.trim()) {
+      case 'identity':
+        return MemoryType.identity;
+      case 'workflow':
+        return MemoryType.workflow;
+      case 'voice':
+        return MemoryType.voice;
+      case 'instruction':
+        return MemoryType.instruction;
+      default:
+        return null;
+    }
+  }
+
+  static Future<String> _memoryCreate(
+    Map<String, dynamic> args,
+    MemoryProviderV2 memory,
+    OwnerToolContext? ownerContext,
+  ) async {
+    final content = '${args['content'] ?? ''}'.trim();
+    if (content.isEmpty) {
+      return _error('missing_argument', 'content is required.');
+    }
+    if (content.length > 2000) {
+      return _error(
+        'invalid_value',
+        'content must be at most 2000 characters.',
+      );
+    }
+    final type = _memoryTypeArg(args['type'] ?? 'workflow');
+    if (type == null) {
+      return _error(
+        'invalid_value',
+        'type must be one of: identity, workflow, voice, instruction.',
+      );
+    }
+    final scopeName = '${args['scope'] ?? 'assistant'}'.trim();
+    if (scopeName != 'global' && scopeName != 'assistant') {
+      return _error(
+        'invalid_value',
+        "scope must be 'global' or 'assistant'.",
+      );
+    }
+    final assistantProvider = ownerContext?.assistantProvider;
+    String? assistantId;
+    if (scopeName == 'assistant') {
+      final requested = '${args['assistant_id'] ?? ''}'.trim();
+      assistantId = requested.isNotEmpty
+          ? requested
+          : assistantProvider?.currentAssistant?.id ?? '';
+      if (assistantId.isEmpty) {
+        return _error(
+          'missing_argument',
+          'assistant_id is required for assistant-scoped memories.',
+        );
+      }
+      if (assistantProvider != null &&
+          assistantProvider.getById(assistantId) == null) {
+        return _error(
+          'invalid_value',
+          "assistant_id '$assistantId' does not exist.",
+        );
+      }
+    }
+    final conversationId = '${args['conversation_id'] ?? ''}'.trim();
+    if (conversationId.isNotEmpty &&
+        ownerContext?.chatService?.getConversation(conversationId) == null) {
+      return _error(
+        'invalid_value',
+        "conversation_id '$conversationId' does not exist.",
+      );
+    }
+    // repository.create (not provider.create) so an optional
+    // conversation_id can bind the entry to one conversation; the provider
+    // cache is refreshed explicitly afterwards.
+    final entry = await memory.repository.create(
+      scope: scopeName == 'global'
+          ? MemoryScope.global
+          : MemoryScope.assistant,
+      assistantId: assistantId,
+      conversationId: conversationId.isEmpty ? null : conversationId,
+      type: type,
+      content: content,
+      source: MemorySource.manual,
+    );
+    await memory.reloadCurrentScope();
+    return jsonEncode({'ok': true, 'entry': _memoryRow(entry)});
+  }
+
+  // ---------------------------------------------------------------------------
   // Tool definitions
 
   static const Map<String, dynamic> ownerSettingsGetDefinition = {
@@ -743,6 +1020,131 @@ class OwnerControlTools {
           },
         },
         'required': ['tool'],
+        'additionalProperties': false,
+      },
+    },
+  };
+
+  static const Map<String, dynamic> ownerMcpListDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerMcpList,
+      'description':
+          'List the configured MCP servers (id, name, transport, enabled, '
+          'connected, tool counts). Credentials (headers, env, OAuth state) '
+          'are never included. Every call requires user approval.',
+      'parameters': {'type': 'object', 'properties': <String, dynamic>{}},
+    },
+  };
+
+  static const Map<String, dynamic> ownerMcpToggleDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerMcpToggle,
+      'description':
+          'Enable or disable ONE MCP server by id or exact name. Disabling '
+          'disconnects it; enabling persists the flag and reconnects in the '
+          'background. Every call requires user approval.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'server': {
+            'type': 'string',
+            'description': 'Server id or exact name (from owner_mcp_list).',
+          },
+          'enabled': {
+            'type': 'boolean',
+            'description': 'True to enable (and reconnect), false to '
+                'disable (and disconnect).',
+          },
+        },
+        'required': ['server', 'enabled'],
+        'additionalProperties': false,
+      },
+    },
+  };
+
+  static const Map<String, dynamic> ownerMemoryListDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerMemoryList,
+      'description':
+          "List the user's saved memory entries (scope, type, status, "
+          'content preview). Includes archived entries only when '
+          'include_archived is true. Every call requires user approval.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'include_archived': {
+            'type': 'boolean',
+            'description': 'Also list archived entries (default false).',
+          },
+          'limit': {
+            'type': 'integer',
+            'description': 'Max entries to return, 1-100 (default 50).',
+          },
+        },
+        'additionalProperties': false,
+      },
+    },
+  };
+
+  static const Map<String, dynamic> ownerMemoryWriteDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerMemoryWrite,
+      'description':
+          'Write ONE change to the user\'s memory store. Actions: create '
+          '(content required, max 2000 chars; type identity|workflow|voice|'
+          'instruction; scope global|assistant; optional conversation_id '
+          'binds the entry to one conversation), update_content, update_type, '
+          'archive, restore, delete. Every call requires user approval.',
+      'parameters': {
+        'type': 'object',
+        'properties': {
+          'action': {
+            'type': 'string',
+            'enum': [
+              'create',
+              'update_content',
+              'update_type',
+              'archive',
+              'restore',
+              'delete',
+            ],
+          },
+          'memory_id': {
+            'type': 'string',
+            'description': 'Target entry id (not needed for create).',
+          },
+          'content': {
+            'type': 'string',
+            'description': 'create / update_content: the memory text.',
+          },
+          'type': {
+            'type': 'string',
+            'enum': ['identity', 'workflow', 'voice', 'instruction'],
+            'description': 'create defaults to workflow.',
+          },
+          'scope': {
+            'type': 'string',
+            'enum': ['global', 'assistant'],
+            'description': 'create defaults to assistant.',
+          },
+          'assistant_id': {
+            'type': 'string',
+            'description':
+                'create: assistant-scoped owner; defaults to the current '
+                'assistant.',
+          },
+          'conversation_id': {
+            'type': 'string',
+            'description':
+                'create: optional; binds the entry so it surfaces only in '
+                'that conversation.',
+          },
+        },
+        'required': ['action'],
         'additionalProperties': false,
       },
     },

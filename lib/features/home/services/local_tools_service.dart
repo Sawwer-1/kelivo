@@ -9,6 +9,7 @@ import '../../../core/models/assistant.dart';
 import '../../../core/models/health_data_type.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/mcp_provider.dart';
+import '../../../core/providers/memory_provider_v2.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../utils/utf16_safe_cut.dart';
@@ -53,6 +54,10 @@ class LocalToolNames {
   static const String ownerTaskCreate = 'owner_task_create';
   static const String ownerTaskDelete = 'owner_task_delete';
   static const String ownerLearningCall = 'owner_learning_call';
+  static const String ownerMcpList = 'owner_mcp_list';
+  static const String ownerMcpToggle = 'owner_mcp_toggle';
+  static const String ownerMemoryList = 'owner_memory_list';
+  static const String ownerMemoryWrite = 'owner_memory_write';
 
   // G3: fetch a public web page and return its readable text. Read-only,
   // egress-guarded (private/loopback targets are rejected).
@@ -84,6 +89,10 @@ class LocalToolNames {
     ownerTaskCreate,
     ownerTaskDelete,
     ownerLearningCall,
+    ownerMcpList,
+    ownerMcpToggle,
+    ownerMemoryList,
+    ownerMemoryWrite,
     webExtract,
   ];
 
@@ -101,6 +110,10 @@ class LocalToolNames {
     ownerTaskCreate,
     ownerTaskDelete,
     ownerLearningCall,
+    ownerMcpList,
+    ownerMcpToggle,
+    ownerMemoryList,
+    ownerMemoryWrite,
   ];
 }
 
@@ -114,12 +127,14 @@ class OwnerToolContext {
     this.assistantProvider,
     this.settings,
     this.mcpProvider,
+    this.memoryProvider,
   });
 
   final ChatService? chatService;
   final AssistantProvider? assistantProvider;
   final SettingsProvider? settings;
   final McpProvider? mcpProvider;
+  final MemoryProviderV2? memoryProvider;
 }
 
 class PhoneControlStatus {
@@ -553,6 +568,14 @@ class LocalToolsService {
         return OwnerControlTools.ownerTaskDeleteDefinition;
       case LocalToolNames.ownerLearningCall:
         return OwnerControlTools.ownerLearningCallDefinition;
+      case LocalToolNames.ownerMcpList:
+        return OwnerControlTools.ownerMcpListDefinition;
+      case LocalToolNames.ownerMcpToggle:
+        return OwnerControlTools.ownerMcpToggleDefinition;
+      case LocalToolNames.ownerMemoryList:
+        return OwnerControlTools.ownerMemoryListDefinition;
+      case LocalToolNames.ownerMemoryWrite:
+        return OwnerControlTools.ownerMemoryWriteDefinition;
       case LocalToolNames.webExtract:
         return _webExtractDefinition;
       default:
@@ -637,6 +660,18 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.ownerLearningCall) {
       return OwnerControlTools.handleLearningCall(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerMcpList) {
+      return OwnerControlTools.handleMcpList(ownerContext);
+    }
+    if (name == LocalToolNames.ownerMcpToggle) {
+      return OwnerControlTools.handleMcpToggle(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerMemoryList) {
+      return OwnerControlTools.handleMemoryList(args, ownerContext);
+    }
+    if (name == LocalToolNames.ownerMemoryWrite) {
+      return OwnerControlTools.handleMemoryWrite(args, ownerContext);
     }
     if (name == LocalToolNames.webExtract) {
       return WebExtractService.extract(args);

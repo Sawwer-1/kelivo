@@ -12516,6 +12516,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Owner: learning gateway call'**
   String get ownerToolLearningCallTitle;
+  /// No description provided for @ownerToolMcpListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: MCP server list'**
+  String get ownerToolMcpListTitle;
+
+  /// No description provided for @ownerToolMcpToggleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: toggle MCP server'**
+  String get ownerToolMcpToggleTitle;
+
+  /// No description provided for @ownerToolMemoryListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: memory list'**
+  String get ownerToolMemoryListTitle;
+
+  /// No description provided for @ownerToolMemoryWriteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: memory write'**
+  String get ownerToolMemoryWriteTitle;
+
+  /// No description provided for @messageMoreSheetContinueOverwriteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue generation'**
+  String get messageMoreSheetContinueOverwriteTitle;
+
+  /// No description provided for @messageMoreSheetContinueOverwriteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This message already has content. Continuing will regenerate it from scratch and replace the current text.'**
+  String get messageMoreSheetContinueOverwriteBody;
+
+  /// No description provided for @messageMoreSheetContinueOverwriteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get messageMoreSheetContinueOverwriteConfirm;
+
+  /// No description provided for @messageMoreSheetContinueOverwriteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get messageMoreSheetContinueOverwriteCancel;
+
 
   /// No description provided for @assistantEditLocalToolRemindersCompleteSubtitle.
   ///

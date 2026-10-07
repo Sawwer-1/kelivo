@@ -64,6 +64,14 @@ IconData localToolIcon(String id) {
       return Lucide.Trash2;
     case LocalToolNames.ownerLearningCall:
       return Lucide.BookOpen;
+    case LocalToolNames.ownerMcpList:
+      return Lucide.Network;
+    case LocalToolNames.ownerMcpToggle:
+      return Lucide.Zap;
+    case LocalToolNames.ownerMemoryList:
+      return Lucide.Layers;
+    case LocalToolNames.ownerMemoryWrite:
+      return Lucide.SquarePen;
     default:
       return Lucide.Wrench;
   }
@@ -121,6 +129,14 @@ String localToolTitle(AppLocalizations l10n, String id) {
       return l10n.ownerToolTaskDeleteTitle;
     case LocalToolNames.ownerLearningCall:
       return l10n.ownerToolLearningCallTitle;
+    case LocalToolNames.ownerMcpList:
+      return l10n.ownerToolMcpListTitle;
+    case LocalToolNames.ownerMcpToggle:
+      return l10n.ownerToolMcpToggleTitle;
+    case LocalToolNames.ownerMemoryList:
+      return l10n.ownerToolMemoryListTitle;
+    case LocalToolNames.ownerMemoryWrite:
+      return l10n.ownerToolMemoryWriteTitle;
     default:
       return id;
   }
