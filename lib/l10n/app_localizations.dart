@@ -12710,6 +12710,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drag on the screenshot to select a region; only the selected part is sent.'**
   String get quickCaptureCropHint;
+  /// No description provided for @ownerToolDreamViewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner: view dream profile'**
+  String get ownerToolDreamViewTitle;
+
+  /// No description provided for @settingsPageDreamView.
+  ///
+  /// In en, this message translates to:
+  /// **'Dream view (relationship profile)'**
+  String get settingsPageDreamView;
+
+  /// No description provided for @dreamViewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What this assistant knows about you and your workflow, assembled from the memory tier. Promoted learning-gateway lessons ride the <learned_policy> injection; review them in the memory page and the gateway review flow.'**
+  String get dreamViewDescription;
+
+  /// No description provided for @dreamViewSelectAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get dreamViewSelectAssistant;
+
+  /// No description provided for @dreamViewProfileFields.
+  ///
+  /// In en, this message translates to:
+  /// **'User profile fields'**
+  String get dreamViewProfileFields;
+
+  /// No description provided for @dreamViewMemoriesActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active memories'**
+  String get dreamViewMemoriesActive;
+
+  /// No description provided for @dreamViewMemoriesArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived memories'**
+  String get dreamViewMemoriesArchived;
+
+  /// No description provided for @dreamViewShowArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Show archived'**
+  String get dreamViewShowArchived;
+
+  /// No description provided for @dreamViewEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet.'**
+  String get dreamViewEmpty;
+
+  /// No description provided for @dreamViewScopeGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'global'**
+  String get dreamViewScopeGlobal;
+
+  /// No description provided for @dreamViewScopeAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'assistant'**
+  String get dreamViewScopeAssistant;
+
+  /// No description provided for @dreamViewLessonsNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Promoted learning-gateway lessons are injected automatically via <learned_policy> and reviewed in the gateway review flow — they are not duplicated here.'**
+  String get dreamViewLessonsNote;
+
+  /// No description provided for @dreamViewEntryMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'{scope} · updated {date}'**
+  String dreamViewEntryMeta(String scope, String date);
+
 
   /// No description provided for @sshHostsDeleteConfirm.
   ///

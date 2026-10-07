@@ -62,6 +62,7 @@ class LocalToolNames {
   static const String sshExec = 'ssh_exec';
   static const String sshUpload = 'ssh_upload';
   static const String sshDownload = 'ssh_download';
+  static const String ownerDreamView = 'owner_dream_view';
 
   // G3: fetch a public web page and return its readable text. Read-only,
   // egress-guarded (private/loopback targets are rejected).
@@ -100,6 +101,7 @@ class LocalToolNames {
     sshExec,
     sshUpload,
     sshDownload,
+    ownerDreamView,
     webExtract,
   ];
 
@@ -124,6 +126,7 @@ class LocalToolNames {
     sshExec,
     sshUpload,
     sshDownload,
+    ownerDreamView,
   ];
 }
 
@@ -592,6 +595,8 @@ class LocalToolsService {
         return SshToolsService.sshUploadDefinition;
       case LocalToolNames.sshDownload:
         return SshToolsService.sshDownloadDefinition;
+      case LocalToolNames.ownerDreamView:
+        return OwnerControlTools.ownerDreamViewDefinition;
       case LocalToolNames.webExtract:
         return _webExtractDefinition;
       default:
@@ -697,6 +702,9 @@ class LocalToolsService {
     }
     if (name == LocalToolNames.sshDownload) {
       return SshToolsService.download(args);
+    }
+    if (name == LocalToolNames.ownerDreamView) {
+      return OwnerControlTools.handleDreamView(ownerContext);
     }
     if (name == LocalToolNames.webExtract) {
       return WebExtractService.extract(args);

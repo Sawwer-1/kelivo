@@ -2896,6 +2896,22 @@
   "sshHostsMissingFields": "Name, host and username are required.",
   "quickCaptureCrop": "Crop",
   "quickCaptureCropHint": "Drag on the screenshot to select a region; only the selected part is sent.",
+  "ownerToolDreamViewTitle": "Owner: view dream profile",
+  "settingsPageDreamView": "Dream view (relationship profile)",
+  "dreamViewDescription": "What this assistant knows about you and your workflow, assembled from the memory tier. Promoted learning-gateway lessons ride the <learned_policy> injection; review them in the memory page and the gateway review flow.",
+  "dreamViewSelectAssistant": "Assistant",
+  "dreamViewProfileFields": "User profile fields",
+  "dreamViewMemoriesActive": "Active memories",
+  "dreamViewMemoriesArchived": "Archived memories",
+  "dreamViewShowArchived": "Show archived",
+  "dreamViewEmpty": "Nothing here yet.",
+  "dreamViewScopeGlobal": "global",
+  "dreamViewScopeAssistant": "assistant",
+  "dreamViewLessonsNote": "Promoted learning-gateway lessons are injected automatically via <learned_policy> and reviewed in the gateway review flow — they are not duplicated here.",
+  "dreamViewEntryMeta": "{scope} · updated {date}",
+  "@dreamViewEntryMeta": {
+    "placeholders": {"scope": {"type": "String"}, "date": {"type": "String"}}
+  },
   "sshHostsDeleteConfirm": "Delete host profile \"{name}\"?",
   "sshHostsSubtitle": "{host}:{port} · {username} · {auth}",
   "@sshHostsDeleteConfirm": {

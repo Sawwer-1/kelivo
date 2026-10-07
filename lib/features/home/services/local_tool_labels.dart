@@ -78,6 +78,8 @@ IconData localToolIcon(String id) {
       return Lucide.Upload;
     case LocalToolNames.sshDownload:
       return Lucide.Download;
+    case LocalToolNames.ownerDreamView:
+      return Lucide.Sparkles;
     default:
       return Lucide.Wrench;
   }
@@ -149,6 +151,8 @@ String localToolTitle(AppLocalizations l10n, String id) {
       return l10n.assistantEditLocalToolSshUploadTitle;
     case LocalToolNames.sshDownload:
       return l10n.assistantEditLocalToolSshDownloadTitle;
+    case LocalToolNames.ownerDreamView:
+      return l10n.ownerToolDreamViewTitle;
     default:
       return id;
   }

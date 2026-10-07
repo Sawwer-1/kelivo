@@ -6615,6 +6615,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sshHostsMissingFields => '名称、主机地址与用户名为必填项。';
   String get quickCaptureCrop => '裁剪';
   String get quickCaptureCropHint => '在截图上拖拽选择区域，发送时只保留选中部分。';
+  String get ownerToolDreamViewTitle => 'Owner：查看关系画像';
+  String get settingsPageDreamView => '关系画像（Dream）';
+  String get dreamViewDescription => '当前助手对你的认知与工作偏好，来自记忆条目的汇总。学习网关的晋升经验经 <learned_policy> 自动注入；其审查在记忆管理页与网关复审流程进行。';
+  String get dreamViewSelectAssistant => '助手';
+  String get dreamViewProfileFields => '用户画像字段';
+  String get dreamViewMemoriesActive => '生效中的记忆';
+  String get dreamViewMemoriesArchived => '已归档记忆';
+  String get dreamViewShowArchived => '显示归档';
+  String get dreamViewEmpty => '这里还没有内容。';
+  String get dreamViewScopeGlobal => '全局';
+  String get dreamViewScopeAssistant => '助手级';
+  String get dreamViewLessonsNote => '学习网关的晋升经验经 <learned_policy> 自动注入、并在网关复审流程中审查——此处不再重复列出。';
+  String dreamViewEntryMeta(String scope, String date) {
+    return '$scope · 更新于 $date';
+  }
   String sshHostsDeleteConfirm(String name) {
     return '确定删除主机档案“$name”？';
   }
@@ -18972,6 +18987,21 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get sshHostsMissingFields => '名称、主机地址与用户名为必填项。';
   String get quickCaptureCrop => '裁剪';
   String get quickCaptureCropHint => '在截图上拖拽选择区域，发送时只保留选中部分。';
+  String get ownerToolDreamViewTitle => 'Owner：查看关系画像';
+  String get settingsPageDreamView => '关系画像（Dream）';
+  String get dreamViewDescription => '当前助手对你的认知与工作偏好，来自记忆条目的汇总。学习网关的晋升经验经 <learned_policy> 自动注入；其审查在记忆管理页与网关复审流程进行。';
+  String get dreamViewSelectAssistant => '助手';
+  String get dreamViewProfileFields => '用户画像字段';
+  String get dreamViewMemoriesActive => '生效中的记忆';
+  String get dreamViewMemoriesArchived => '已归档记忆';
+  String get dreamViewShowArchived => '显示归档';
+  String get dreamViewEmpty => '这里还没有内容。';
+  String get dreamViewScopeGlobal => '全局';
+  String get dreamViewScopeAssistant => '助手级';
+  String get dreamViewLessonsNote => '学习网关的晋升经验经 <learned_policy> 自动注入、并在网关复审流程中审查——此处不再重复列出。';
+  String dreamViewEntryMeta(String scope, String date) {
+    return '$scope · 更新于 $date';
+  }
   String sshHostsDeleteConfirm(String name) {
     return '确定删除主机档案“$name”？';
   }
@@ -31374,6 +31404,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get sshHostsMissingFields => '名稱、主機位址與使用者名稱為必填項。';
   String get quickCaptureCrop => '裁剪';
   String get quickCaptureCropHint => '在截圖上拖拽選擇區域，傳送時只保留選中部分。';
+  String get ownerToolDreamViewTitle => 'Owner：查看關係畫像';
+  String get settingsPageDreamView => '關係畫像（Dream）';
+  String get dreamViewDescription => '當前助手對你的認知與工作偏好，來自記憶條目的彙總。學習網關的晉升經驗經 <learned_policy> 自動注入；其審查在記憶管理頁與網關復審流程進行。';
+  String get dreamViewSelectAssistant => '助手';
+  String get dreamViewProfileFields => '使用者畫像欄位';
+  String get dreamViewMemoriesActive => '生效中的記憶';
+  String get dreamViewMemoriesArchived => '已歸檔記憶';
+  String get dreamViewShowArchived => '顯示歸檔';
+  String get dreamViewEmpty => '這裡還沒有內容。';
+  String get dreamViewScopeGlobal => '全域';
+  String get dreamViewScopeAssistant => '助手級';
+  String get dreamViewLessonsNote => '學習網關的晉升經驗經 <learned_policy> 自動注入、並在網關復審流程中審查——此處不再重複列出。';
+  String dreamViewEntryMeta(String scope, String date) {
+    return '$scope · 更新於 $date';
+  }
   String sshHostsDeleteConfirm(String name) {
     return '確定刪除主機檔案「$name」？';
   }

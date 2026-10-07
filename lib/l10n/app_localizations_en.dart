@@ -6886,6 +6886,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sshHostsMissingFields => 'Name, host and username are required.';
   String get quickCaptureCrop => 'Crop';
   String get quickCaptureCropHint => 'Drag on the screenshot to select a region; only the selected part is sent.';
+  String get ownerToolDreamViewTitle => 'Owner: view dream profile';
+  String get settingsPageDreamView => 'Dream view (relationship profile)';
+  String get dreamViewDescription => 'What this assistant knows about you and your workflow, assembled from the memory tier. Promoted learning-gateway lessons ride the <learned_policy> injection; review them in the memory page and the gateway review flow.';
+  String get dreamViewSelectAssistant => 'Assistant';
+  String get dreamViewProfileFields => 'User profile fields';
+  String get dreamViewMemoriesActive => 'Active memories';
+  String get dreamViewMemoriesArchived => 'Archived memories';
+  String get dreamViewShowArchived => 'Show archived';
+  String get dreamViewEmpty => 'Nothing here yet.';
+  String get dreamViewScopeGlobal => 'global';
+  String get dreamViewScopeAssistant => 'assistant';
+  String get dreamViewLessonsNote => 'Promoted learning-gateway lessons are injected automatically via <learned_policy> and reviewed in the gateway review flow — they are not duplicated here.';
+  String dreamViewEntryMeta(String scope, String date) {
+    return '$scope · updated $date';
+  }
   String sshHostsDeleteConfirm(String name) {
     return 'Delete host profile "$name"?';
   }

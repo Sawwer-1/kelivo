@@ -662,6 +662,58 @@ class OwnerControlTools {
     'updated_at': e.updatedAt.toIso8601String(),
   };
 
+  /// H integration (Dream mechanism over the existing stores): the
+  /// relationship profile is the (user × assistant) view assembled from the
+  /// user profile fields and assistant-visible memory entries. Promoted
+  /// learning-gateway lessons ride the separate learned_policy injection
+  /// and are intentionally not duplicated here. No new claim pipeline is
+  /// introduced — the memory tier and the learning gateway already carry
+  /// confidence, evidence and human review.
+  static Future<String> handleDreamView(
+    OwnerToolContext? ownerContext,
+  ) async {
+    final assistantProvider = ownerContext?.assistantProvider;
+    final chatService = ownerContext?.chatService;
+    if (assistantProvider == null || chatService == null) {
+      return _ownerUnavailable();
+    }
+    final assistant = assistantProvider.currentAssistant;
+    if (assistant == null) {
+      return _error('no_assistant', 'There is no current assistant.');
+    }
+    final repo = chatService.chatRepositoryOrNull;
+    if (repo == null) {
+      return _error(
+        'repository_unavailable',
+        'The memory repository is not available right now.',
+      );
+    }
+    try {
+      final profile = await repo.readProfileFields();
+      final memories = await repo.queryVisibleMemories(
+        assistantId: assistant.id,
+      );
+      return jsonEncode({
+        'assistant': {'id': assistant.id, 'name': assistant.name},
+        'note':
+            'Relationship profile (user × assistant). Promoted '
+            'learning-gateway lessons are injected automatically via the '
+            'learned_policy tag and are not listed here.',
+        'profile_fields': [
+          for (final f in profile)
+            {
+              'key': f.key,
+              'value': f.value,
+              'updated_at': f.updatedAt.toIso8601String(),
+            },
+        ],
+        'memories': [for (final e in memories) _memoryRow(e)],
+      });
+    } catch (e) {
+      return _error('dream_view_failed', '$e');
+    }
+  }
+
   static Future<String> handleMemoryList(
     Map<String, dynamic> args,
     OwnerToolContext? ownerContext,
@@ -1048,6 +1100,20 @@ class OwnerControlTools {
         'required': ['tool'],
         'additionalProperties': false,
       },
+    },
+  };
+
+  static const Map<String, dynamic> ownerDreamViewDefinition = {
+    'type': 'function',
+    'function': {
+      'name': LocalToolNames.ownerDreamView,
+      'description':
+          'View the current relationship profile (the "dream" view) for the '
+          'active assistant: saved user profile fields and assistant-scoped '
+          'memory entries. Promoted learning-gateway lessons are injected '
+          'automatically via <learned_policy> and are not listed here. '
+          'Read-only; every call requires user approval.',
+      'parameters': {'type': 'object', 'properties': <String, dynamic>{}},
     },
   };
 

@@ -33,6 +33,7 @@ import '../core/providers/assistant_provider.dart';
 import '../features/home/controllers/chat_actions.dart' show ChatActions;
 import 'setting/doctor_pane.dart';
 import 'setting/ssh_hosts_pane.dart';
+import 'setting/dream_view_pane.dart';
 import '../core/models/assistant.dart';
 import '../utils/avatar_cache.dart';
 import '../utils/sandbox_path_resolver.dart';
@@ -135,6 +136,7 @@ enum _SettingsMenuItem {
   scheduledTasks,
   hotkeys,
   sshHosts,
+  dreamView,
   stats,
   doctor,
   about,
@@ -370,6 +372,8 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           );
                         case _SettingsMenuItem.sshHosts:
                           return const SshHostsPane(key: ValueKey('sshHosts'));
+                        case _SettingsMenuItem.dreamView:
+                          return const DreamViewPane(key: ValueKey('dream'));
                         case _SettingsMenuItem.about:
                           return const DesktopAboutPane(key: ValueKey('about'));
                       }
@@ -479,6 +483,11 @@ class _SettingsMenu extends StatelessWidget {
         _SettingsMenuItem.sshHosts,
         lucide.Lucide.Terminal,
         l10n.settingsPageSshHosts,
+      ),
+      (
+        _SettingsMenuItem.dreamView,
+        lucide.Lucide.Sparkles,
+        l10n.settingsPageDreamView,
       ),
       (
         _SettingsMenuItem.stats,
