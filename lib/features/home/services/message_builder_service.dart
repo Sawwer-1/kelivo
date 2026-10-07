@@ -1865,36 +1865,80 @@ class MessageBuilderService {
   /// lessons are stated as working policy; unconfirmed ones ship as a
   /// shadow section for reference only. Windows only (the gateway is a
   /// desktop sidecar) — silently no-ops elsewhere.
+  /// Parsed-snapshot cache: the snapshot is read on every message build, so
+  /// reuse the parse result until the file's (mtime, size) changes. Keeps
+  /// the synchronous read but skips repeated disk I/O + jsonDecode work.
+  ({DateTime modified, int size, List<dynamic> entries})?
+  _learnedSnapshotCache;
+
+  /// Mirrors the gateway's `_snapshot_path`: when the user relocates the
+  /// lessons database via `LEARNING_DB`, the snapshot lives next to that
+  /// file. Default stays `<APPDATA>\kelivo_learning\promoted_snapshot.json`.
+  File? _learningSnapshotFile() {
+    final dbOverride = Platform.environment['LEARNING_DB']?.trim();
+    if (dbOverride != null && dbOverride.isNotEmpty) {
+      final parent = File(dbOverride).parent.path;
+      return File('$parent\\promoted_snapshot.json');
+    }
+    final appData = Platform.environment['APPDATA'];
+    if (appData == null || appData.isEmpty) return null;
+    return File('$appData\\kelivo_learning\\promoted_snapshot.json');
+  }
+
+  List<dynamic> _loadSnapshotEntries(File file) {
+    final stat = file.statSync();
+    final cached = _learnedSnapshotCache;
+    if (cached != null &&
+        cached.modified == stat.modified &&
+        cached.size == stat.size) {
+      return cached.entries;
+    }
+    final decoded = jsonDecode(file.readAsStringSync());
+    final entries = (decoded is Map<String, dynamic>
+            ? decoded['entries']
+            : null) as List? ??
+        const <dynamic>[];
+    _learnedSnapshotCache = (
+      modified: stat.modified,
+      size: stat.size,
+      entries: List<dynamic>.of(entries),
+    );
+    return entries;
+  }
+
   void injectLearnedPolicy(List<Map<String, dynamic>> apiMessages) {
     try {
       final settings = contextProvider.read<SettingsProvider>();
       if (!settings.learningAutoInject) return;
       if (!Platform.isWindows) return;
-      final appData = Platform.environment['APPDATA'];
-      if (appData == null || appData.isEmpty) return;
-      final file = File('$appData\\kelivo_learning\\promoted_snapshot.json');
-      if (!file.existsSync()) return;
-      final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-      final rawEntries = data['entries'];
-      if (rawEntries is! List || rawEntries.isEmpty) return;
+      final file = _learningSnapshotFile();
+      if (file == null || !file.existsSync()) return;
+      final rawEntries = _loadSnapshotEntries(file);
+      if (rawEntries.isEmpty) return;
       final confirmed = <String>[];
       final shadow = <String>[];
       for (final raw in rawEntries) {
-        if (raw is! Map<String, dynamic>) continue;
-        final content = (raw['content'] as String? ?? '').trim();
-        if (content.isEmpty) continue;
-        final type = raw['type'] as String? ?? 'lesson';
-        final tags = (raw['tags'] as List? ?? const [])
-            .map((t) => t.toString())
-            .where((t) => t.isNotEmpty)
-            .join(', ');
-        final line = tags.isEmpty
-            ? '[$type] $content'
-            : '[$type] $content (tags: $tags)';
-        if (raw['retrieval_confirmed'] == true) {
-          confirmed.add(line);
-        } else {
-          shadow.add(line);
+        // One malformed entry (wrong field type, etc.) must not discard the
+        // whole injection — skip it and keep the rest.
+        try {
+          if (raw is! Map<String, dynamic>) continue;
+          final content = (raw['content'] as String? ?? '').trim();
+          if (content.isEmpty) continue;
+          final type = raw['type'] as String? ?? 'lesson';
+          final tags = (raw['tags'] as List? ?? const [])
+              .map((t) => t.toString())
+              .where((t) => t.isNotEmpty)
+              .join(', ');
+          final line = tags.isEmpty
+              ? '[$type] $content'
+              : '[$type] $content (tags: $tags)';
+          if (raw['retrieval_confirmed'] == true) {
+            confirmed.add(line);
+          } else {
+            shadow.add(line);
+          }
+        } catch (_) {
+          continue;
         }
       }
       if (confirmed.isEmpty && shadow.isEmpty) return;

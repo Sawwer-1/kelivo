@@ -8,6 +8,7 @@ import '../../../core/models/scheduled_task.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/scheduled_tasks_service.dart';
+import '../../../utils/utf16_safe_cut.dart';
 import 'local_tools_service.dart';
 
 /// Owner write tools (C3 phase 2): a conservative control-plane surface over
@@ -155,6 +156,11 @@ class OwnerControlTools {
       );
     }
     final value = args['value'];
+    if (value == null) {
+      // A bare `'$value'` would smuggle a null through as the string "null"
+      // and pass the non-empty checks below — reject it explicitly.
+      return _error('missing_argument', 'value is required.');
+    }
     switch (key) {
       case 'app_locale':
         final tag = '$value'.trim();
@@ -251,7 +257,7 @@ class OwnerControlTools {
     'id': task.id,
     'name': task.name,
     'prompt': task.prompt.length > 300
-        ? '${task.prompt.substring(0, 300)}…[truncated]'
+        ? '${truncateHeadUtf16Safe(task.prompt, 300)}…[truncated]'
         : task.prompt,
     'hour': task.hour,
     'minute': task.minute,
@@ -373,6 +379,18 @@ class OwnerControlTools {
         'conversation_id is required for follow_up tasks.',
       );
     }
+    if (mode == ScheduledTaskMode.followUp) {
+      // Without this check a follow_up task would fire into a missing
+      // conversation and silently never take effect.
+      final chatService = ownerContext?.chatService;
+      if (chatService != null &&
+          chatService.getConversation(conversationId) == null) {
+        return _error(
+          'invalid_value',
+          "conversation_id '$conversationId' does not exist.",
+        );
+      }
+    }
     final assistantId = '${args['assistant_id'] ?? ''}'.trim().isNotEmpty
         ? '${args['assistant_id']}'.trim()
         : (ownerContext?.assistantProvider?.currentAssistant?.id ?? '');
@@ -380,6 +398,17 @@ class OwnerControlTools {
       return _error(
         'missing_argument',
         'assistant_id is required (there is no current assistant).',
+      );
+    }
+    // Same rationale: a task bound to a deleted/unknown assistant would
+    // never produce a visible run. Skipped only when the provider itself is
+    // unavailable (same tolerance as the currentAssistant fallback above).
+    final assistantProvider = ownerContext?.assistantProvider;
+    if (assistantProvider != null &&
+        assistantProvider.getById(assistantId) == null) {
+      return _error(
+        'invalid_value',
+        "assistant_id '$assistantId' does not exist.",
       );
     }
     final task = ScheduledTask(

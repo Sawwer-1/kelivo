@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../../utils/utf16_safe_cut.dart';
+
 /// Append-only JSONL audit trail for every client tool call.
 ///
 /// One file per day under `<app support>/tool_audit/audit-YYYYMMDD.jsonl`,
@@ -39,16 +41,24 @@ final class ToolCallAudit {
     String? error,
   }) {
     if (!enabled) return;
-    final entry = jsonEncode({
-      'ts': DateTime.now().toUtc().toIso8601String(),
-      'tool': tool,
-      if (toolCallId != null) 'toolCallId': toolCallId,
-      if (conversationId != null) 'conversationId': conversationId,
-      'status': status,
-      'elapsedMs': elapsedMs,
-      'args': _truncateText(jsonEncode(_redactArgs(arguments)), 400),
-      if (error != null) 'error': _truncateText(error, 400),
-    });
+    // jsonEncode must never escape this method: arguments come from tool
+    // handlers and could theoretically carry a non-JSON-encodable object.
+    // The trail is best-effort — a bad payload is dropped, not thrown.
+    final String entry;
+    try {
+      entry = jsonEncode({
+        'ts': DateTime.now().toUtc().toIso8601String(),
+        'tool': tool,
+        if (toolCallId != null) 'toolCallId': toolCallId,
+        if (conversationId != null) 'conversationId': conversationId,
+        'status': status,
+        'elapsedMs': elapsedMs,
+        'args': _truncateText(jsonEncode(_redactArgs(arguments)), 400),
+        if (error != null) 'error': _truncateText(error, 400),
+      });
+    } catch (_) {
+      return;
+    }
     // Serialized write chain: no interleaved appends, audit order == call order.
     _tail = _tail
         .then((_) => _append(entry, DateTime.now()))
@@ -110,7 +120,7 @@ final class ToolCallAudit {
   }
 
   static String _truncateText(String text, int limit) =>
-      text.length <= limit ? text : '${text.substring(0, limit)}…';
+      text.length <= limit ? text : '${truncateHeadUtf16Safe(text, limit)}…';
 
   /// Key names whose values must never reach the audit file in plaintext.
   static final RegExp _redactKeyName = RegExp(

@@ -187,10 +187,15 @@ def _insert_lesson(
     ).fetchone()
     now = _now()
     if dup:
+        # Refresh type/tags along with ts/confidence: a re-record with
+        # corrected metadata should win, and the FTS index must stay in sync.
+        tags_json = json.dumps(tag_list, ensure_ascii=False)
         db.execute(
-            "UPDATE lessons SET ts = ?, confidence = ? WHERE id = ?",
-            (now, confidence, dup["id"]),
+            "UPDATE lessons SET ts = ?, confidence = ?, type = ?, tags = ? "
+            "WHERE id = ?",
+            (now, confidence, type, tags_json, dup["id"]),
         )
+        _fts_upsert(db, dup["id"], _fts_text(text, tags_json))
         db.commit()
         return dup["id"], True
     lid = _new_id()
@@ -533,7 +538,7 @@ def learning_export_worldbook(path: str = "", mode: str = "constant") -> str:
                 "position": "AFTER_SYSTEM_PROMPT",
                 "content": r["content"],
                 "injectDepth": 4,
-                "role": "USER",
+                "role": "user",
                 "keywords": tags,
                 "useRegex": False,
                 "caseSensitive": False,
@@ -664,6 +669,7 @@ def learning_ingest_inbox(limit: int = 20) -> str:
 
 
 def main() -> None:
+    _db()  # initialize first so the diagnostic reports the real FTS state
     sys.stderr.write(
         f"[learning-gateway] starting on stdio; db={_db_path()} "
         f"fts={_fts_enabled}\n"

@@ -2437,10 +2437,14 @@ class _DesktopAssistantBasicPaneState
                       if (!has) {
                         final trimmed = _tokenBudgetSoftCtrl.text.trim();
                         final n = int.tryParse(trimmed);
+                        // Only positive budgets are meaningful: 0, negative
+                        // or unparsable input clears the cap instead of
+                        // arming a limit that triggers instantly.
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            tokenBudgetSoftCap: n,
-                            clearTokenBudgetSoftCap: trimmed.isEmpty,
+                            tokenBudgetSoftCap: value,
+                            clearTokenBudgetSoftCap: value == null,
                           ),
                         );
                       }
@@ -2474,10 +2478,11 @@ class _DesktopAssistantBasicPaneState
                       onSubmitted: (v) {
                         final trimmed = v.trim();
                         final n = int.tryParse(trimmed);
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            tokenBudgetSoftCap: n,
-                            clearTokenBudgetSoftCap: trimmed.isEmpty,
+                            tokenBudgetSoftCap: value,
+                            clearTokenBudgetSoftCap: value == null,
                           ),
                         );
                       },
@@ -2494,10 +2499,11 @@ class _DesktopAssistantBasicPaneState
                       if (!has) {
                         final trimmed = _tokenBudgetHardCtrl.text.trim();
                         final n = int.tryParse(trimmed);
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            tokenBudgetHardCap: n,
-                            clearTokenBudgetHardCap: trimmed.isEmpty,
+                            tokenBudgetHardCap: value,
+                            clearTokenBudgetHardCap: value == null,
                           ),
                         );
                       }
@@ -2531,10 +2537,11 @@ class _DesktopAssistantBasicPaneState
                       onSubmitted: (v) {
                         final trimmed = v.trim();
                         final n = int.tryParse(trimmed);
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            tokenBudgetHardCap: n,
-                            clearTokenBudgetHardCap: trimmed.isEmpty,
+                            tokenBudgetHardCap: value,
+                            clearTokenBudgetHardCap: value == null,
                           ),
                         );
                       },
@@ -2551,10 +2558,11 @@ class _DesktopAssistantBasicPaneState
                       if (!has) {
                         final trimmed = _contextBudgetCtrl.text.trim();
                         final n = int.tryParse(trimmed);
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            contextBudget: n,
-                            clearContextBudget: trimmed.isEmpty,
+                            contextBudget: value,
+                            clearContextBudget: value == null,
                           ),
                         );
                       }
@@ -2588,10 +2596,11 @@ class _DesktopAssistantBasicPaneState
                       onSubmitted: (v) {
                         final trimmed = v.trim();
                         final n = int.tryParse(trimmed);
+                        final value = n != null && n > 0 ? n : null;
                         context.read<AssistantProvider>().updateAssistant(
                           a.copyWith(
-                            contextBudget: n,
-                            clearContextBudget: trimmed.isEmpty,
+                            contextBudget: value,
+                            clearContextBudget: value == null,
                           ),
                         );
                       },

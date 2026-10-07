@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import '../../../../utils/mcp_structured_image.dart';
+import '../../../../utils/utf16_safe_cut.dart';
 import '../../../models/token_usage.dart';
 import '../chat_api_helpers.dart';
 import '../stream/stream_chunk.dart';
@@ -42,9 +43,27 @@ String? _spillToolOutput(EmitToolCall call, String content) {
     final fileName = '${stamp}_${safeName}_$safeId.txt';
     final file = File([dirPath, fileName].join(Platform.pathSeparator));
     file.writeAsStringSync(content, flush: true);
+    _cleanupOldSpillFiles(dirPath);
     return file.path;
   } catch (_) {
     return null;
+  }
+}
+
+/// Opportunistic hygiene: spill files accumulate in the system temp dir and
+/// nothing else ever removes them. Best-effort drop of anything older than
+/// 7 days on each spill write (spills are rare — only past the 32KB cap).
+void _cleanupOldSpillFiles(String dirPath) {
+  try {
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    for (final entity in Directory(dirPath).listSync()) {
+      if (entity is! File || !entity.path.endsWith('.txt')) continue;
+      if (entity.statSync().modified.isBefore(cutoff)) {
+        entity.deleteSync();
+      }
+    }
+  } catch (_) {
+    // Cleanup must never break the spill path itself.
   }
 }
 
@@ -243,7 +262,7 @@ Future<ExecutedClientTool> _executeClientTool(
   if (content.length > kToolOutputMaxChars) {
     final spillPath = _spillToolOutput(call, content);
     content =
-        '${content.substring(0, kToolOutputMaxChars)}\n\n'
+        '${truncateHeadUtf16Safe(content, kToolOutputMaxChars)}\n\n'
         '[tool output truncated: showing first $kToolOutputMaxChars of '
         '${content.length} characters'
         '${spillPath == null ? '' : '; full output saved to $spillPath'}]';

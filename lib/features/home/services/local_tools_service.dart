@@ -11,6 +11,7 @@ import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/mcp_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../utils/utf16_safe_cut.dart';
 import 'owner_control_tools_service.dart';
 import 'web_extract_service.dart';
 
@@ -778,7 +779,7 @@ class LocalToolsService {
         {
           'role': m.role,
           'content': m.content.length > 2000
-              ? '${m.content.substring(0, 2000)}…[truncated]'
+              ? '${truncateHeadUtf16Safe(m.content, 2000)}…[truncated]'
               : m.content,
           'timestamp': m.timestamp.toIso8601String(),
         },

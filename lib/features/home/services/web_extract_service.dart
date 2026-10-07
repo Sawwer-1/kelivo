@@ -141,7 +141,14 @@ class WebExtractService {
     if (type == InternetAddressType.IPv6) {
       final a = addr.address.toLowerCase();
       if (a == '::1' || a == '::') return true;
-      if (a.startsWith('fe80')) return true; // link-local
+      // link-local is fe80::/10 — hextets fe80 through febf — so a plain
+      // startsWith('fe80') would miss fe81..febf. Parse the first hextet.
+      final first = RegExp(r'^([0-9a-f]{1,4})').firstMatch(a);
+      if (first != null) {
+        final v = int.parse(first.group(1)!, radix: 16);
+        if (v >= 0xfe80 && v <= 0xfebf) return true; // link-local
+        if (v >= 0xff00) return true; // multicast — never a valid HTTP target
+      }
       if (a.startsWith('fc') || a.startsWith('fd')) return true; // ULA
       if (a.startsWith('::ffff:')) {
         // IPv4-mapped — validate the embedded v4.
@@ -274,12 +281,23 @@ class WebExtractService {
         .replaceAll('&hellip;', '…');
     out = out.replaceAllMapped(RegExp(r'&#(\d{1,6});'), (m) {
       final code = int.tryParse(m.group(1) ?? '');
-      if (code == null || code < 32 || code > 0x10FFFF) return '';
+      if (code == null ||
+          code < 32 ||
+          code > 0x10FFFF ||
+          (code >= 0xD800 && code <= 0xDFFF)) {
+        // Control chars and unpaired surrogates never belong in the payload.
+        return '';
+      }
       return String.fromCharCode(code);
     });
     out = out.replaceAllMapped(RegExp(r'&#x([0-9a-fA-F]{1,5});'), (m) {
       final code = int.tryParse(m.group(1) ?? '', radix: 16);
-      if (code == null || code < 32 || code > 0x10FFFF) return '';
+      if (code == null ||
+          code < 32 ||
+          code > 0x10FFFF ||
+          (code >= 0xD800 && code <= 0xDFFF)) {
+        return '';
+      }
       return String.fromCharCode(code);
     });
     return out;

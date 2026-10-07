@@ -239,10 +239,8 @@ class ChatApiService {
                 'reached; generation stopped.\n',
           );
           sessionToken.cancel('token_budget_hard_cap');
-        } else if (!softNotified &&
-            softCap != null &&
-            hardCap == null &&
-            total >= softCap) {
+        } else if (!softNotified && softCap != null && total >= softCap) {
+          // Soft cap stays active alongside a hard cap: warn first, stop later.
           softNotified = true;
           yield TextDelta(
             id: StreamChunkIds('generation-guard').text(),

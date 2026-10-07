@@ -263,7 +263,9 @@ class HotkeyProvider extends ChangeNotifier {
 
   // ===== Helpers for parsing/displaying hotkey strings =====
 
-  // Supported commands format: 'ctrl+shift+n', 'cmd+comma', 'ctrl+bracketleft'
+  // Supported commands format: 'ctrl+shift+n', 'cmd+comma', 'ctrl+bracketleft',
+  // 'ctrl+alt+5' (digits 0-9), 'ctrl+f5' (function keys F1-F12).
+  // Anything unparseable is silently skipped at registration time.
   HotKey? _parseCommandToHotKey(
     String command, {
     HotKeyScope scope = HotKeyScope.inapp,
@@ -309,12 +311,22 @@ class HotkeyProvider extends ChangeNotifier {
         default:
           if (p.length == 1) {
             final ch = p[0];
-            if (ch.codeUnitAt(0) >= 97 && ch.codeUnitAt(0) <= 122) {
+            final unit = ch.codeUnitAt(0);
+            if (unit >= 97 && unit <= 122) {
               // a-z -> keyA ... keyZ
               keyboardKey = _letterToLogicalKey(ch);
+            } else if (unit >= 48 && unit <= 57) {
+              // 0-9 -> digit0 ... digit9
+              keyboardKey = _digitToLogicalKey(ch);
             }
           } else if (p.startsWith('key') && p.length == 4) {
             keyboardKey = _letterToLogicalKey(p.substring(3));
+          } else if (p.length >= 2 && p.codeUnitAt(0) == 0x66 /* f */) {
+            // f1..f12 (single-letter 'f' is handled above as keyF)
+            final n = int.tryParse(p.substring(1));
+            if (n != null && n >= 1 && n <= 12) {
+              keyboardKey = _functionKeyToLogicalKey(n);
+            }
           }
       }
     }
@@ -380,6 +392,40 @@ class HotkeyProvider extends ChangeNotifier {
         return LogicalKeyboardKey.keyZ;
     }
     return null;
+  }
+
+  LogicalKeyboardKey? _digitToLogicalKey(String ch) {
+    const map = <String, LogicalKeyboardKey>{
+      '0': LogicalKeyboardKey.digit0,
+      '1': LogicalKeyboardKey.digit1,
+      '2': LogicalKeyboardKey.digit2,
+      '3': LogicalKeyboardKey.digit3,
+      '4': LogicalKeyboardKey.digit4,
+      '5': LogicalKeyboardKey.digit5,
+      '6': LogicalKeyboardKey.digit6,
+      '7': LogicalKeyboardKey.digit7,
+      '8': LogicalKeyboardKey.digit8,
+      '9': LogicalKeyboardKey.digit9,
+    };
+    return map[ch];
+  }
+
+  LogicalKeyboardKey? _functionKeyToLogicalKey(int n) {
+    const map = <int, LogicalKeyboardKey>{
+      1: LogicalKeyboardKey.f1,
+      2: LogicalKeyboardKey.f2,
+      3: LogicalKeyboardKey.f3,
+      4: LogicalKeyboardKey.f4,
+      5: LogicalKeyboardKey.f5,
+      6: LogicalKeyboardKey.f6,
+      7: LogicalKeyboardKey.f7,
+      8: LogicalKeyboardKey.f8,
+      9: LogicalKeyboardKey.f9,
+      10: LogicalKeyboardKey.f10,
+      11: LogicalKeyboardKey.f11,
+      12: LogicalKeyboardKey.f12,
+    };
+    return map[n];
   }
 
   static String formatCommandForDisplay(String? cmd) {
