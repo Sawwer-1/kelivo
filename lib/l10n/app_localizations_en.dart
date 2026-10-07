@@ -6866,6 +6866,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assistantEditLocalToolSshExecTitle => 'SSH: run command';
   String get assistantEditLocalToolSshUploadTitle => 'SSH: upload file';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH: download file';
+  String get settingsPageSshHosts => 'SSH hosts';
+  String get sshHostsDescription => 'Saved profiles for the SSH tools. Passwords are sealed with Windows DPAPI; the model only sees the profile name.';
+  String get sshHostsEmpty => 'No saved hosts yet. Click + to add one.';
+  String get sshHostsAdd => 'Add host';
+  String get sshHostsEdit => 'Edit';
+  String get sshHostsDelete => 'Delete';
+  String get sshHostsName => 'Profile name';
+  String get sshHostsHost => 'Host';
+  String get sshHostsPort => 'Port';
+  String get sshHostsUsername => 'Username';
+  String get sshHostsAuthPassword => 'Password';
+  String get sshHostsAuthKey => 'Key file';
+  String get sshHostsAuthKeyHint => 'Authenticate with a private key file instead of a password';
+  String get sshHostsKeyPath => 'Private key path';
+  String get sshHostsKeyPassphrase => 'Key passphrase (optional)';
+  String get sshHostsPasswordField => 'Password';
+  String get sshHostsSave => 'Save';
+  String get sshHostsMissingFields => 'Name, host and username are required.';
+  String get quickCaptureCrop => 'Crop';
+  String get quickCaptureCropHint => 'Drag on the screenshot to select a region; only the selected part is sent.';
+  String sshHostsDeleteConfirm(String name) {
+    return 'Delete host profile "$name"?';
+  }
+  String sshHostsSubtitle(String host, int port, String username, String auth) {
+    return '$host:$port · $username · $auth';
+  }
   String get messageMoreSheetContinueOverwriteTitle => 'Continue generation';
   String get messageMoreSheetContinueOverwriteBody => 'This message already has content. Continuing will regenerate it from scratch and replace the current text.';
   String get messageMoreSheetContinueOverwriteConfirm => 'Regenerate';

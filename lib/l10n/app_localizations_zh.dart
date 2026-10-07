@@ -6595,6 +6595,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
+  String get settingsPageSshHosts => 'SSH 主机';
+  String get sshHostsDescription => 'SSH 工具的保存主机档案。密码经 Windows DPAPI 密封存储，模型只见档案名称。';
+  String get sshHostsEmpty => '还没有保存的主机，点右上角 + 添加。';
+  String get sshHostsAdd => '添加主机';
+  String get sshHostsEdit => '编辑';
+  String get sshHostsDelete => '删除';
+  String get sshHostsName => '档案名称';
+  String get sshHostsHost => '主机地址';
+  String get sshHostsPort => '端口';
+  String get sshHostsUsername => '用户名';
+  String get sshHostsAuthPassword => '密码认证';
+  String get sshHostsAuthKey => '密钥文件';
+  String get sshHostsAuthKeyHint => '使用私钥文件代替密码认证';
+  String get sshHostsKeyPath => '私钥文件路径';
+  String get sshHostsKeyPassphrase => '密钥口令（可选）';
+  String get sshHostsPasswordField => '密码';
+  String get sshHostsSave => '保存';
+  String get sshHostsMissingFields => '名称、主机地址与用户名为必填项。';
+  String get quickCaptureCrop => '裁剪';
+  String get quickCaptureCropHint => '在截图上拖拽选择区域，发送时只保留选中部分。';
+  String sshHostsDeleteConfirm(String name) {
+    return '确定删除主机档案“$name”？';
+  }
+  String sshHostsSubtitle(String host, int port, String username, String auth) {
+    return '$host:$port · $username · $auth';
+  }
   String get messageMoreSheetContinueOverwriteTitle => '继续生成';
   String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
@@ -18926,6 +18952,32 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get assistantEditLocalToolSshExecTitle => 'SSH：执行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上传文件';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下载文件';
+  String get settingsPageSshHosts => 'SSH 主机';
+  String get sshHostsDescription => 'SSH 工具的保存主机档案。密码经 Windows DPAPI 密封存储，模型只见档案名称。';
+  String get sshHostsEmpty => '还没有保存的主机，点右上角 + 添加。';
+  String get sshHostsAdd => '添加主机';
+  String get sshHostsEdit => '编辑';
+  String get sshHostsDelete => '删除';
+  String get sshHostsName => '档案名称';
+  String get sshHostsHost => '主机地址';
+  String get sshHostsPort => '端口';
+  String get sshHostsUsername => '用户名';
+  String get sshHostsAuthPassword => '密码认证';
+  String get sshHostsAuthKey => '密钥文件';
+  String get sshHostsAuthKeyHint => '使用私钥文件代替密码认证';
+  String get sshHostsKeyPath => '私钥文件路径';
+  String get sshHostsKeyPassphrase => '密钥口令（可选）';
+  String get sshHostsPasswordField => '密码';
+  String get sshHostsSave => '保存';
+  String get sshHostsMissingFields => '名称、主机地址与用户名为必填项。';
+  String get quickCaptureCrop => '裁剪';
+  String get quickCaptureCropHint => '在截图上拖拽选择区域，发送时只保留选中部分。';
+  String sshHostsDeleteConfirm(String name) {
+    return '确定删除主机档案“$name”？';
+  }
+  String sshHostsSubtitle(String host, int port, String username, String auth) {
+    return '$host:$port · $username · $auth';
+  }
   String get messageMoreSheetContinueOverwriteTitle => '继续生成';
   String get messageMoreSheetContinueOverwriteBody => '该消息已有内容，继续将从头重新生成本条并覆盖现有内容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';
@@ -31302,6 +31354,32 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get assistantEditLocalToolSshExecTitle => 'SSH：執行命令';
   String get assistantEditLocalToolSshUploadTitle => 'SSH：上傳檔案';
   String get assistantEditLocalToolSshDownloadTitle => 'SSH：下載檔案';
+  String get settingsPageSshHosts => 'SSH 主機';
+  String get sshHostsDescription => 'SSH 工具的儲存主機檔案。密碼經 Windows DPAPI 密封儲存，模型只見檔案名稱。';
+  String get sshHostsEmpty => '還沒有儲存的主機，點右上角 + 新增。';
+  String get sshHostsAdd => '新增主機';
+  String get sshHostsEdit => '編輯';
+  String get sshHostsDelete => '刪除';
+  String get sshHostsName => '檔案名稱';
+  String get sshHostsHost => '主機位址';
+  String get sshHostsPort => '連接埠';
+  String get sshHostsUsername => '使用者名稱';
+  String get sshHostsAuthPassword => '密碼認證';
+  String get sshHostsAuthKey => '金鑰檔案';
+  String get sshHostsAuthKeyHint => '使用私鑰檔案代替密碼認證';
+  String get sshHostsKeyPath => '私鑰檔案路徑';
+  String get sshHostsKeyPassphrase => '金鑰口令（可選）';
+  String get sshHostsPasswordField => '密碼';
+  String get sshHostsSave => '儲存';
+  String get sshHostsMissingFields => '名稱、主機位址與使用者名稱為必填項。';
+  String get quickCaptureCrop => '裁剪';
+  String get quickCaptureCropHint => '在截圖上拖拽選擇區域，傳送時只保留選中部分。';
+  String sshHostsDeleteConfirm(String name) {
+    return '確定刪除主機檔案「$name」？';
+  }
+  String sshHostsSubtitle(String host, int port, String username, String auth) {
+    return '$host:$port · $username · $auth';
+  }
   String get messageMoreSheetContinueOverwriteTitle => '繼續生成';
   String get messageMoreSheetContinueOverwriteBody => '該訊息已有內容，繼續將從頭重新生成本條並覆蓋現有內容。';
   String get messageMoreSheetContinueOverwriteConfirm => '重新生成';

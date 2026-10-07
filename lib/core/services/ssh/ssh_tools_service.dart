@@ -7,11 +7,34 @@ import 'package:dartssh2/dartssh2.dart';
 
 import '../../../features/home/services/local_tools_service.dart'
     show LocalToolNames;
+import 'ssh_hosts_store.dart';
 
-/// G2 SSH/SFTP local tools (phase 1): credentials are passed per call by
-/// the model and confirmed through the standard per-tool approval; the
-/// audit trail redacts password-shaped keys automatically. Vault-backed
-/// host profiles (no per-call passwords) are phase 2.
+/// G2 SSH/SFTP local tools. Phase 1: per-call credentials. Phase 2 (this
+/// file now): saved host profiles with vault-sealed passwords (Settings →
+/// SSH hosts) and key-file authentication. Resolution order per call:
+/// explicit host+username wins; otherwise `profile` looks up the saved
+/// store. Credentials confirmed through the standard per-tool approval and
+/// redacted from the audit trail by key name.
+
+class _AuthConfig {
+  const _AuthConfig({
+    required this.host,
+    required this.port,
+    required this.username,
+    required this.password,
+    required this.keyPath,
+    required this.keyPassphrase,
+  });
+
+  final String host;
+  final int port;
+  final String username;
+  final String password;
+  final String keyPath;
+  final String keyPassphrase;
+
+  bool get useKey => keyPath.isNotEmpty;
+}
 
 abstract final class SshToolsService {
   static const int defaultPort = 22;
@@ -19,43 +42,99 @@ abstract final class SshToolsService {
   static const Duration commandTimeout = Duration(seconds: 90);
   static const int maxTransferBytes = 64 * 1024 * 1024;
 
-  static ({String host, int port, String username, String password})?
-      _parseCommon(Map<String, dynamic> args) {
+  /// Returns (errorJson, null) on bad arguments, or (null, auth) on success.
+  static Future<(String?, _AuthConfig?)> _resolveAuth(
+    Map<String, dynamic> args,
+  ) async {
+    final profileName = '${args['profile'] ?? ''}'.trim();
     final host = '${args['host'] ?? ''}'.trim();
-    if (host.isEmpty) return null;
-    final port = int.tryParse('${args['port'] ?? ''}'.trim()) ?? defaultPort;
-    if (port < 1 || port > 65535) return null;
     final username = '${args['username'] ?? ''}'.trim();
-    if (username.isEmpty) return null;
-    final password = '${args['password'] ?? ''}';
-    return (host: host, port: port, username: username, password: password);
+    final keyPathArg = '${args['key_path'] ?? ''}'.trim();
+    final keyPassphraseArg = '${args['key_passphrase'] ?? ''}';
+
+    var port = defaultPort;
+    final portRaw = '${args['port'] ?? ''}'.trim();
+    if (portRaw.isNotEmpty) {
+      final parsed = int.tryParse(portRaw);
+      if (parsed == null || parsed < 1 || parsed > 65535) {
+        return (
+          _argError('port must be an integer between 1 and 65535.'),
+          null,
+        );
+      }
+      port = parsed;
+    }
+
+    // Saved profile fills any credential the call did not spell out.
+    if (profileName.isNotEmpty) {
+      final profile = SshHostsStore.instance.byName(profileName);
+      if (profile == null) {
+        return (
+          jsonEncode({
+            'error': 'unknown_profile',
+            'message': "No saved SSH host profile named '$profileName'. "
+                'Add one in Settings → SSH hosts.',
+          }),
+          null,
+        );
+      }
+      return (
+        null,
+        _AuthConfig(
+          host: host.isNotEmpty ? host : profile.host,
+          port: portRaw.isNotEmpty ? port : profile.port,
+          username: username.isNotEmpty ? username : profile.username,
+          password: keyPathArg.isEmpty
+              ? (args['password'] is String
+                  ? args['password'] as String
+                  : profile.password)
+              : '',
+          keyPath: profile.useKeyAuth && profile.keyPath.isNotEmpty
+              ? profile.keyPath
+              : keyPathArg,
+          keyPassphrase: keyPassphraseArg.isNotEmpty
+              ? keyPassphraseArg
+              : profile.keyPassphrase,
+        ),
+      );
+    }
+
+    if (host.isEmpty || username.isEmpty) {
+      return (
+        _argError(
+          'Provide either a saved `profile`, or host + username plus a '
+              'password (or key_path).',
+        ),
+        null,
+      );
+    }
+    return (
+      null,
+      _AuthConfig(
+        host: host,
+        port: port,
+        username: username,
+        password: keyPathArg.isEmpty ? '${args['password'] ?? ''}' : '',
+        keyPath: keyPathArg,
+        keyPassphrase: keyPassphraseArg,
+      ),
+    );
   }
 
   static String _argError(String message) =>
       jsonEncode({'error': 'invalid_argument', 'message': message});
 
   static Future<String> exec(Map<String, dynamic> args) async {
-    final common = _parseCommon(args);
-    if (common == null) {
-      return _argError(
-          'host, username are required; port must be 1-65535 if given.');
-    }
+    final (authError, auth) = await _resolveAuth(args);
+    if (authError != null) return authError;
+    if (auth == null) return _argError('unreachable');
     final command = '${args['command'] ?? ''}'.trim();
     if (command.isEmpty) {
       return _argError('command is required.');
     }
     SSHClient? client;
     try {
-      final socket = await SSHSocket.connect(
-        common.host,
-        common.port,
-        timeout: connectTimeout,
-      );
-      client = SSHClient(
-        socket,
-        username: common.username,
-        onPasswordRequest: () => common.password,
-      );
+      client = await _connect(auth);
       final session = await client.execute(command);
       // SSHProcess exposes stdout/stderr as byte streams and exitCode as a
       // plain int; drain both streams concurrently before decoding.
@@ -71,10 +150,10 @@ abstract final class SshToolsService {
           future.timeout(commandTimeout, onTimeout: () {
             throw TimeoutException('command exceeded $commandTimeout');
           });
-      final stdout = utf8.decode(
-          await guard(drain(session.stdout)), allowMalformed: true);
-      final stderr = utf8.decode(
-          await guard(drain(session.stderr)), allowMalformed: true);
+      final stdout = utf8.decode(await guard(drain(session.stdout)),
+          allowMalformed: true);
+      final stderr = utf8.decode(await guard(drain(session.stderr)),
+          allowMalformed: true);
       final exitCode = session.exitCode;
       return jsonEncode({
         'exit_code': exitCode,
@@ -91,11 +170,9 @@ abstract final class SshToolsService {
   }
 
   static Future<String> upload(Map<String, dynamic> args) async {
-    final common = _parseCommon(args);
-    if (common == null) {
-      return _argError(
-          'host, username are required; port must be 1-65535 if given.');
-    }
+    final (authError, auth) = await _resolveAuth(args);
+    if (authError != null) return authError;
+    if (auth == null) return _argError('unreachable');
     final localPath = '${args['local_path'] ?? ''}'.trim();
     final remotePath = '${args['remote_path'] ?? ''}'.trim();
     if (localPath.isEmpty || remotePath.isEmpty) {
@@ -117,10 +194,12 @@ abstract final class SshToolsService {
       });
     }
     return _transfer(
-      common,
+      auth,
       remotePath: remotePath,
       bytes: () => localFile.readAsBytes(),
-      mode: SftpFileOpenMode.create | SftpFileOpenMode.truncate | SftpFileOpenMode.write,
+      mode: SftpFileOpenMode.create |
+          SftpFileOpenMode.truncate |
+          SftpFileOpenMode.write,
       describe: (sent) => {
         'ok': true,
         'direction': 'upload',
@@ -131,21 +210,19 @@ abstract final class SshToolsService {
   }
 
   static Future<String> download(Map<String, dynamic> args) async {
-    final common = _parseCommon(args);
-    if (common == null) {
-      return _argError(
-          'host, username are required; port must be 1-65535 if given.');
-    }
+    final (authError, auth) = await _resolveAuth(args);
+    if (authError != null) return authError;
+    if (auth == null) return _argError('unreachable');
     final localPath = '${args['local_path'] ?? ''}'.trim();
     final remotePath = '${args['remote_path'] ?? ''}'.trim();
     if (localPath.isEmpty || remotePath.isEmpty) {
       return _argError('local_path and remote_path are required.');
     }
     return _transfer(
-      common,
+      auth,
       remotePath: remotePath,
       bytes: () async {
-        final client = await _connect(common);
+        final client = await _connect(auth);
         try {
           final sftp = await client.sftp();
           final remote =
@@ -180,11 +257,12 @@ abstract final class SshToolsService {
     );
   }
 
-  /// Shared plumbing for the SFTP directions. [bytes] opens its own
-  /// client (the download branch needs the connection before the local
-  /// side does anything); [mode] selects remote open flags (null = read).
+  /// Shared plumbing for the SFTP directions. [bytes] produces the payload
+  /// (the download branch opens its own connection because the remote stat
+  /// must happen before anything local); [mode] selects remote open flags
+  /// (null = read-only download).
   static Future<String> _transfer(
-    ({String host, int port, String username, String password}) common, {
+    _AuthConfig auth, {
     required String remotePath,
     required Future<Uint8List> Function() bytes,
     required SftpFileOpenMode? mode,
@@ -197,7 +275,7 @@ abstract final class SshToolsService {
         onTimeout: () => throw TimeoutException('transfer exceeded 5 min'),
       );
       if (mode != null) {
-        client = await _connect(common);
+        client = await _connect(auth);
         final sftp = await client.sftp();
         final remote = await sftp.open(remotePath, mode: mode);
         try {
@@ -218,24 +296,37 @@ abstract final class SshToolsService {
     }
   }
 
-  static Future<SSHClient> _connect(
-    ({String host, int port, String username, String password}) common,
-  ) async {
+  static Future<SSHClient> _connect(_AuthConfig auth) async {
     final socket = await SSHSocket.connect(
-      common.host,
-      common.port,
+      auth.host,
+      auth.port,
       timeout: connectTimeout,
     );
+    if (auth.useKey) {
+      final pem = await File(auth.keyPath).readAsString();
+      // dartssh2 2.22: fromPem takes an optional positional passphrase and
+      // is synchronous.
+      final identities = SSHKeyPair.fromPem(
+        pem,
+        auth.keyPassphrase.isEmpty ? null : auth.keyPassphrase,
+      );
+      return SSHClient(socket, username: auth.username, identities: identities);
+    }
     return SSHClient(
       socket,
-      username: common.username,
-      onPasswordRequest: () => common.password,
+      username: auth.username,
+      onPasswordRequest: () => auth.password,
     );
   }
 
   // ---------------------------------------------------------------------------
-  // Tool definitions. All three require per-call approval; the shared
-  // credential block is repeated verbatim so each definition stands alone.
+  // Tool definitions. All three require per-call approval; auth comes from a
+  // saved profile (Settings → SSH hosts) or explicit per-call credentials.
+
+  static const String _authParamsDescription =
+      'Authentication: either a saved `profile` name (Settings → SSH hosts, '
+      'recommended — no password in the call), or host + username plus a '
+      'password, or host + username + key_path.';
 
   static const Map<String, dynamic> sshExecDefinition = {
     'type': 'function',
@@ -245,10 +336,17 @@ abstract final class SshToolsService {
           'Run ONE shell command on a remote host over SSH and return '
           'stdout/stderr/exit code as JSON. Use only for hosts the user '
           'explicitly asked to work with. Every call requires user approval '
-          '(the approval card shows the host and command).',
+          '(the approval card shows the host and command). '
+          '$_authParamsDescription',
       'parameters': {
         'type': 'object',
         'properties': {
+          'profile': {
+            'type': 'string',
+            'description':
+                'Saved SSH host profile name (Settings → SSH hosts). When '
+                'given, host/port/username/credentials come from it.',
+          },
           'host': {'type': 'string', 'description': 'SSH host or IP.'},
           'port': {
             'type': 'integer',
@@ -257,14 +355,24 @@ abstract final class SshToolsService {
           'username': {'type': 'string'},
           'password': {
             'type': 'string',
-            'description': 'SSH password (key auth is phase 2).',
+            'description':
+                'SSH password (skip when using profile or key_path).',
+          },
+          'key_path': {
+            'type': 'string',
+            'description':
+                'Local path of an SSH private key file (key auth).',
+          },
+          'key_passphrase': {
+            'type': 'string',
+            'description': 'Passphrase for the private key, if any.',
           },
           'command': {
             'type': 'string',
             'description': 'One shell command to run on the remote host.',
           },
         },
-        'required': ['host', 'username', 'password', 'command'],
+        'required': ['command'],
         'additionalProperties': false,
       },
     },
@@ -277,10 +385,17 @@ abstract final class SshToolsService {
       'description':
           'Upload a local file to a remote host over SFTP (overwrite target, '
           'per-file cap 64 MB). Every call requires user approval (the '
-          'approval card shows host, local and remote paths).',
+          'approval card shows host, local and remote paths). '
+          '$_authParamsDescription',
       'parameters': {
         'type': 'object',
         'properties': {
+          'profile': {
+            'type': 'string',
+            'description':
+                'Saved SSH host profile name (Settings → SSH hosts). When '
+                'given, host/port/username/credentials come from it.',
+          },
           'host': {'type': 'string', 'description': 'SSH host or IP.'},
           'port': {
             'type': 'integer',
@@ -289,7 +404,17 @@ abstract final class SshToolsService {
           'username': {'type': 'string'},
           'password': {
             'type': 'string',
-            'description': 'SSH password (key auth is phase 2).',
+            'description':
+                'SSH password (skip when using profile or key_path).',
+          },
+          'key_path': {
+            'type': 'string',
+            'description':
+                'Local path of an SSH private key file (key auth).',
+          },
+          'key_passphrase': {
+            'type': 'string',
+            'description': 'Passphrase for the private key, if any.',
           },
           'local_path': {
             'type': 'string',
@@ -300,8 +425,7 @@ abstract final class SshToolsService {
             'description': 'Absolute destination path on the remote host.',
           },
         },
-        'required': ['host', 'username', 'password', 'local_path',
-            'remote_path'],
+        'required': ['local_path', 'remote_path'],
         'additionalProperties': false,
       },
     },
@@ -314,10 +438,17 @@ abstract final class SshToolsService {
       'description':
           'Download a remote file to a local path over SFTP (per-file cap '
           '64 MB). Every call requires user approval (the approval card '
-          'shows host, remote and local paths).',
+          'shows host, remote and local paths). '
+          '$_authParamsDescription',
       'parameters': {
         'type': 'object',
         'properties': {
+          'profile': {
+            'type': 'string',
+            'description':
+                'Saved SSH host profile name (Settings → SSH hosts). When '
+                'given, host/port/username/credentials come from it.',
+          },
           'host': {'type': 'string', 'description': 'SSH host or IP.'},
           'port': {
             'type': 'integer',
@@ -326,7 +457,17 @@ abstract final class SshToolsService {
           'username': {'type': 'string'},
           'password': {
             'type': 'string',
-            'description': 'SSH password (key auth is phase 2).',
+            'description':
+                'SSH password (skip when using profile or key_path).',
+          },
+          'key_path': {
+            'type': 'string',
+            'description':
+                'Local path of an SSH private key file (key auth).',
+          },
+          'key_passphrase': {
+            'type': 'string',
+            'description': 'Passphrase for the private key, if any.',
           },
           'remote_path': {
             'type': 'string',
@@ -337,8 +478,7 @@ abstract final class SshToolsService {
             'description': 'Absolute local destination path.',
           },
         },
-        'required': ['host', 'username', 'password', 'remote_path',
-            'local_path'],
+        'required': ['remote_path', 'local_path'],
         'additionalProperties': false,
       },
     },

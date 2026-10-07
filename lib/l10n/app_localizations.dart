@@ -12591,6 +12591,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SSH: download file'**
   String get assistantEditLocalToolSshDownloadTitle;
+  /// No description provided for @settingsPageSshHosts.
+  ///
+  /// In en, this message translates to:
+  /// **'SSH hosts'**
+  String get settingsPageSshHosts;
+
+  /// No description provided for @sshHostsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved profiles for the SSH tools. Passwords are sealed with Windows DPAPI; the model only sees the profile name.'**
+  String get sshHostsDescription;
+
+  /// No description provided for @sshHostsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved hosts yet. Click + to add one.'**
+  String get sshHostsEmpty;
+
+  /// No description provided for @sshHostsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add host'**
+  String get sshHostsAdd;
+
+  /// No description provided for @sshHostsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get sshHostsEdit;
+
+  /// No description provided for @sshHostsDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get sshHostsDelete;
+
+  /// No description provided for @sshHostsName.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile name'**
+  String get sshHostsName;
+
+  /// No description provided for @sshHostsHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get sshHostsHost;
+
+  /// No description provided for @sshHostsPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get sshHostsPort;
+
+  /// No description provided for @sshHostsUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get sshHostsUsername;
+
+  /// No description provided for @sshHostsAuthPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get sshHostsAuthPassword;
+
+  /// No description provided for @sshHostsAuthKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Key file'**
+  String get sshHostsAuthKey;
+
+  /// No description provided for @sshHostsAuthKeyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate with a private key file instead of a password'**
+  String get sshHostsAuthKeyHint;
+
+  /// No description provided for @sshHostsKeyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Private key path'**
+  String get sshHostsKeyPath;
+
+  /// No description provided for @sshHostsKeyPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Key passphrase (optional)'**
+  String get sshHostsKeyPassphrase;
+
+  /// No description provided for @sshHostsPasswordField.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get sshHostsPasswordField;
+
+  /// No description provided for @sshHostsSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get sshHostsSave;
+
+  /// No description provided for @sshHostsMissingFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Name, host and username are required.'**
+  String get sshHostsMissingFields;
+
+  /// No description provided for @quickCaptureCrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Crop'**
+  String get quickCaptureCrop;
+
+  /// No description provided for @quickCaptureCropHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag on the screenshot to select a region; only the selected part is sent.'**
+  String get quickCaptureCropHint;
+
+  /// No description provided for @sshHostsDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete host profile "{name}"?'**
+  String sshHostsDeleteConfirm(String name);
+
+  /// No description provided for @sshHostsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{host}:{port} · {username} · {auth}'**
+  String sshHostsSubtitle(String host, int port, String username, String auth);
+
 
 
 

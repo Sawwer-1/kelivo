@@ -16,6 +16,7 @@ import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/app_font_weights.dart';
 import '../../../theme/design_tokens.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/model_spec/model_spec_resolver.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/quick_phrase_provider.dart';
@@ -759,12 +760,7 @@ class _HomePageState extends State<HomePage>
 
     _quickCaptureSub = ChatActionBus.instance.quickCaptureSends.listen(
       (payload) {
-        _controller.sendMessage(
-          ChatInputData(
-            text: payload.text,
-            imagePaths: [payload.imagePath],
-          ),
-        );
+        _sendQuickCapturePayload(payload);
       },
     );
 
@@ -836,6 +832,37 @@ class _HomePageState extends State<HomePage>
     _scrollController.dispose();
     routeObserver.unsubscribe(this);
     super.dispose();
+  }
+
+  /// F2 phase 2: route the capture to the Owner assistant's latest
+  /// conversation when one is configured; otherwise the current one. Falls
+  /// back silently to the current conversation on any lookup hiccup.
+  Future<void> _sendQuickCapturePayload(QuickCaptureSend payload) async {
+    try {
+      final ownerId = context.read<SettingsProvider>().ownerAssistantId;
+      if (ownerId != null && ownerId.isNotEmpty) {
+        final conversations = context
+            .read<ChatService>()
+            .getAllConversations()
+            .where((c) => c.assistantId == ownerId)
+            .toList();
+        if (conversations.isNotEmpty) {
+          conversations.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          final target = conversations.first;
+          if (target.id != _controller.currentConversation?.id) {
+            await _controller.switchConversationAnimated(target.id);
+          }
+        }
+      }
+    } catch (_) {
+      // Routing is best-effort; the capture always goes somewhere.
+    }
+    await _controller.sendMessage(
+      ChatInputData(
+        text: payload.text,
+        imagePaths: [payload.imagePath],
+      ),
+    );
   }
 
   void _onControllerChanged() {

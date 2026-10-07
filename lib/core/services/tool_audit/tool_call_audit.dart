@@ -39,6 +39,7 @@ final class ToolCallAudit {
     required int elapsedMs,
     required String status,
     String? error,
+    String? source,
   }) {
     if (!enabled) return;
     // jsonEncode must never escape this method: arguments come from tool
@@ -51,6 +52,7 @@ final class ToolCallAudit {
         'tool': tool,
         if (toolCallId != null) 'toolCallId': toolCallId,
         if (conversationId != null) 'conversationId': conversationId,
+        if (source != null) 'source': source,
         'status': status,
         'elapsedMs': elapsedMs,
         'args': _truncateText(jsonEncode(_redactArgs(arguments)), 400),

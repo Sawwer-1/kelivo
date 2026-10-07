@@ -2255,6 +2255,9 @@ class ChatActions {
                 conversationId: conversationId,
                 elapsedMs: auditStopwatch.elapsedMilliseconds,
                 status: ToolCallAudit.statusOf(auditResult),
+                // C4: owner-control-plane calls get a dedicated source tag
+                // so audit review can filter them in one sweep.
+                source: name.startsWith('owner_') ? 'owner_tool' : null,
               );
               _scheduleBackgroundGenerationUpdate(state);
             }
