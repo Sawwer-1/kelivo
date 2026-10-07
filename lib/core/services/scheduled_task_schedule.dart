@@ -58,6 +58,28 @@ void validateScheduledTask(ScheduledTask task) {
               task.modelProvider!.trim().isEmpty)) {
     throw ArgumentError('invalid_task');
   }
+  // G5 workflow steps: bounded count, non-empty prompts, the first step
+  // cannot consume a previous output (there is none), fixed-text steps must
+  // carry text, and per-step model overrides must stay paired.
+  if (task.steps.length > 10) {
+    throw ArgumentError('invalid_task');
+  }
+  for (var i = 0; i < task.steps.length; i++) {
+    final step = task.steps[i];
+    if (step.prompt.trim().isEmpty || step.prompt.trim().length > 16000) {
+      throw ArgumentError('invalid_task');
+    }
+    if (i == 0 && step.source == ScheduledTaskStepSource.previousOutput) {
+      throw ArgumentError('invalid_task');
+    }
+    if (step.source == ScheduledTaskStepSource.fixedText &&
+        step.fixedText.trim().isEmpty) {
+      throw ArgumentError('invalid_task');
+    }
+    if ((step.modelProvider == null) != (step.modelId == null)) {
+      throw ArgumentError('invalid_task');
+    }
+  }
   if (task.preparationWindowMinutes < 1 ||
       task.preparationWindowMinutes > 1440 ||
       task.maxPrepareAttempts < 1 ||

@@ -280,6 +280,16 @@ class OwnerControlTools {
             'started_at': task.runs.first.startedAt?.toIso8601String(),
             'error': task.runs.first.error,
           },
+    if (task.steps.isNotEmpty)
+      'steps': [
+        for (final s in task.steps)
+          {
+            'source': s.source.name,
+            'prompt': s.prompt.length > 80
+                ? '${truncateHeadUtf16Safe(s.prompt, 80)}…'
+                : s.prompt,
+          },
+      ],
   };
 
   static Future<String> handleTaskList(OwnerToolContext? ownerContext) async {
@@ -427,6 +437,7 @@ class OwnerControlTools {
           ? conversationId
           : null,
       notify: args['notify'] is bool ? args['notify'] as bool : true,
+      steps: _parseSteps(args['steps']),
     );
     try {
       await ScheduledTasksService.instance.save(task);
@@ -647,6 +658,21 @@ class OwnerControlTools {
   // Memory family (C3 phase 3). Reads go through the typed-column read path
   // (queryAllMemories) so archived entries can be listed too; writes go
   // through MemoryProviderV2 so the UI caches stay in sync.
+
+  /// G5: optional workflow steps for owner_task_create. Each entry is a map
+  /// with prompt (required), source (fixedText|previousOutput, default
+  /// fixedText), fixed_text, and optional model_provider/model_id. Structural
+  /// validation happens in validateScheduledTask on save.
+  static List<ScheduledTaskStep> _parseSteps(Object? raw) {
+    if (raw is! List || raw.isEmpty) return const <ScheduledTaskStep>[];
+    return [
+      for (final item in raw)
+        if (item is Map)
+          ScheduledTaskStep.fromJson(
+            Map<String, dynamic>.from(item),
+          ),
+    ];
+  }
 
   static Map<String, dynamic> _memoryRow(MemoryEntry e) => {
     'id': e.id,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import '../../core/database/generation_run.dart';
@@ -111,7 +112,81 @@ Future<Map<String, Object?>> runScheduledTask(
     if (cancellation.cancelled) unawaited(cancellation.cancel());
   }
 
-  final ChatActionResult result;
+  final repository = chat.chatRepositoryOrNull!;
+
+  /// Sends one scheduled message and waits for its generation run to reach a
+  /// terminal state, enforcing approvals/timeout/cancellation. Returns the
+  /// result map plus the assistant's final text (workflow step chaining).
+  Future<(Map<String, Object?>, String)> runStep(
+    String inputText, {
+    ({String providerKey, String modelId})? modelOverride,
+  }) async {
+    final result = await viewModel.sendScheduledMessage(
+      input: ChatInputData(text: inputText),
+      conversation: conversation,
+      assistant: assistant,
+      modelOverride: modelOverride,
+      onGenerationStarted: onStarted,
+      scheduledNotify: task.notify,
+      scheduledPreview: task.showPreview,
+    );
+    if (cancellation.cancelled) await cancellation.cancel();
+    cancellation.check();
+    if (!result.success) {
+      throw StateError(result.errorMessage ?? 'generation_failed');
+    }
+    final runId = result.generationRunId;
+    if (runId == null) throw StateError('generation_run_missing');
+    final deadline = DateTime.now().add(const Duration(minutes: 9));
+    while (true) {
+      cancellation.check();
+      final run = await repository.getGenerationRun(runId);
+      if (run == null) throw StateError('generation_run_missing');
+      if (run.state.isTerminal) {
+        final message = await repository.getMessage(
+          result.assistantMessage!.id,
+        );
+        final text = message?.content ?? '';
+        return (
+          {
+            'conversationId': conversation.id,
+            'status': run.state == GenerationRunState.completed
+                ? 'completed'
+                : 'failed',
+            'preview': text.characters.take(200).toString(),
+            if (run.errorCode != null) 'error': run.errorCode,
+          },
+          text,
+        );
+      }
+      // Preserve tool approval rules. Unattended runs cannot answer for the
+      // user.
+      if (approvals.pendingRequests.any(
+            (r) => r.conversationId == conversation.id,
+          ) ||
+          questions.pendingRequests.values.any(
+            (r) => r.conversationId == conversation.id,
+          )) {
+        throw StateError('user_interaction_required');
+      }
+      if (DateTime.now().isAfter(deadline)) {
+        throw TimeoutException('execution_timeout');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Execution plan:
+  // - regenerate: original path (message re-run), steps ignored.
+  // - no steps: single prompt (legacy behavior, unchanged).
+  // - steps: sequential chain — each step sends its prompt combined with the
+  //   selected input source (previous assistant output or fixed text); any
+  //   failure stops the chain with the failing step recorded on the run.
+  final steps = task.mode == ScheduledTaskMode.regenerate
+      ? const <ScheduledTaskStep>[]
+      : task.steps;
+  var runResult = <String, Object?>{};
   if (task.mode == ScheduledTaskMode.regenerate) {
     final message = await chat.chatRepositoryOrNull?.getMessage(
       task.messageId ?? '',
@@ -122,7 +197,7 @@ Future<Map<String, Object?>> runScheduledTask(
         message.role != 'user') {
       throw StateError('message_missing');
     }
-    result = await viewModel.regenerateScheduledMessage(
+    final result = await viewModel.regenerateScheduledMessage(
       message: message,
       conversation: conversation,
       assistant: assistant,
@@ -131,53 +206,95 @@ Future<Map<String, Object?>> runScheduledTask(
       scheduledNotify: task.notify,
       scheduledPreview: task.showPreview,
     );
-  } else {
-    result = await viewModel.sendScheduledMessage(
-      input: ChatInputData(text: task.prompt),
-      conversation: conversation,
-      assistant: assistant,
-      modelOverride: modelOverride,
-      onGenerationStarted: onStarted,
-      scheduledNotify: task.notify,
-      scheduledPreview: task.showPreview,
-    );
-  }
-  if (cancellation.cancelled) await cancellation.cancel();
-  cancellation.check();
-  if (!result.success) {
-    throw StateError(result.errorMessage ?? 'generation_failed');
-  }
-  final repository = chat.chatRepositoryOrNull!;
-  final runId = result.generationRunId;
-  if (runId == null) throw StateError('generation_run_missing');
-  final deadline = DateTime.now().add(const Duration(minutes: 9));
-  while (true) {
+    if (cancellation.cancelled) await cancellation.cancel();
     cancellation.check();
-    final run = await repository.getGenerationRun(runId);
-    if (run == null) throw StateError('generation_run_missing');
-    if (run.state.isTerminal) {
-      final message = await repository.getMessage(result.assistantMessage!.id);
-      return {
-        'conversationId': conversation.id,
-        'status': run.state == GenerationRunState.completed
-            ? 'completed'
-            : 'failed',
-        'preview': (message?.content ?? '').characters.take(200).toString(),
-        if (run.errorCode != null) 'error': run.errorCode,
-      };
+    if (!result.success) {
+      throw StateError(result.errorMessage ?? 'generation_failed');
     }
-    // Preserve tool approval rules. Unattended runs cannot answer for the user.
-    if (approvals.pendingRequests.any(
-          (r) => r.conversationId == conversation.id,
-        ) ||
-        questions.pendingRequests.values.any(
-          (r) => r.conversationId == conversation.id,
-        )) {
-      throw StateError('user_interaction_required');
+    final runId = result.generationRunId;
+    if (runId == null) throw StateError('generation_run_missing');
+    final deadline = DateTime.now().add(const Duration(minutes: 9));
+    while (true) {
+      cancellation.check();
+      final run = await repository.getGenerationRun(runId);
+      if (run == null) throw StateError('generation_run_missing');
+      if (run.state.isTerminal) {
+        final msg = await repository.getMessage(result.assistantMessage!.id);
+        final text = msg?.content ?? '';
+        if (run.state != GenerationRunState.completed) {
+          throw StateError(run.errorCode ?? 'generation_failed');
+        }
+        return {
+          'conversationId': conversation.id,
+          'status': 'completed',
+          'preview': text.characters.take(200).toString(),
+        };
+      }
+      if (approvals.pendingRequests.any(
+            (r) => r.conversationId == conversation.id,
+          ) ||
+          questions.pendingRequests.values.any(
+            (r) => r.conversationId == conversation.id,
+          )) {
+        throw StateError('user_interaction_required');
+      }
+      if (DateTime.now().isAfter(deadline)) {
+        throw TimeoutException('execution_timeout');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
     }
-    if (DateTime.now().isAfter(deadline)) {
-      throw TimeoutException('execution_timeout');
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 500));
   }
+  var previousOutput = '';
+  for (var i = 0; i < math.max(steps.length, 1); i++) {
+    cancellation.check();
+    String inputText;
+    ({String providerKey, String modelId})? stepOverride;
+    if (steps.isEmpty) {
+      inputText = task.prompt;
+      stepOverride = modelOverride;
+    } else {
+      final step = steps[i];
+      final sourcePayload = i == 0
+          ? (step.source == ScheduledTaskStepSource.fixedText
+                ? step.fixedText
+                : '')
+          : (step.source == ScheduledTaskStepSource.fixedText
+                ? step.fixedText
+                : previousOutput);
+      inputText = sourcePayload.isEmpty
+          ? step.prompt
+          : '$sourcePayload\n\n${step.prompt}';
+      if (step.modelProvider != null && step.modelId != null) {
+        final config = settings.getProviderConfig(step.modelProvider!);
+        if (!config.enabled || !config.models.contains(step.modelId)) {
+          throw StateError('model_missing');
+        }
+        stepOverride = (
+          providerKey: step.modelProvider!,
+          modelId: step.modelId!,
+        );
+      } else {
+        stepOverride = modelOverride;
+      }
+    }
+    final (stepResult, assistantText) = await runStep(
+      inputText,
+      modelOverride: stepOverride,
+    );
+    if (stepResult['status'] != 'completed') {
+      runResult = {
+        ...stepResult,
+        if (steps.isNotEmpty) 'failed_step': i + 1,
+      };
+      throw StateError(
+        steps.isEmpty
+            ? stepResult['error']?.toString() ?? 'generation_failed'
+            : 'workflow_step_failed:${i + 1} '
+                '${stepResult['error'] ?? ''}'.trim(),
+      );
+    }
+    previousOutput = assistantText;
+    runResult = {...stepResult, if (steps.isNotEmpty) 'steps_run': i + 1};
+  }
+  return runResult;
 }

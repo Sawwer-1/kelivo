@@ -12169,8 +12169,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scheduledTasksPrompt => 'Prompt';
 
   @override
+  @override
   String get scheduledTasksPromptHint =>
       'What would you like your assistant to do?';
+
+  @override
+  String get scheduledTasksWorkflowSteps => 'Workflow steps';
+
+  @override
+  String get scheduledTasksWorkflowHint =>
+      'Run multiple steps in order; each step can use the previous step\'s '
+      'output.';
+
+  @override
+  String get scheduledTasksAddStep => 'Add step';
+
+  @override
+  String get scheduledTasksStepPrompt => 'Step prompt';
+
+  @override
+  String get scheduledTasksStepSourceFixed => 'Fixed text';
+
+  @override
+  String get scheduledTasksStepSourcePrev => 'Use previous output';
+
+  @override
+  String get scheduledTasksStepFixedText =>
+      'Fixed text (input for this step)';
+
+  @override
+  String get scheduledTasksStepFirstNote =>
+      'This is the first step; it cannot use a previous output.';
+
+  @override
+  String get scheduledTasksStepUsePrevNote =>
+      'The previous step\'s reply is added before this prompt.';
+
+  @override
+  String scheduledTasksStepN(int n) {
+    return 'Step $n';
+  }
 
   @override
   String get scheduledTasksAssistant => 'Assistant';

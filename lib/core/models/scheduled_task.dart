@@ -1,5 +1,43 @@
 enum ScheduledTaskMode { newChat, followUp, regenerate }
 
+enum ScheduledTaskStepSource { previousOutput, fixedText }
+
+/// G5 Workflow: one step of a multi-step scheduled task. The input text
+/// handed to the model is the step's [prompt] combined with the selected
+/// [source] payload (the previous step's assistant output, or fixed text).
+/// A step may override the task-level model.
+class ScheduledTaskStep {
+  const ScheduledTaskStep({
+    required this.prompt,
+    this.source = ScheduledTaskStepSource.fixedText,
+    this.fixedText = '',
+    this.modelProvider,
+    this.modelId,
+  });
+
+  final String prompt;
+  final ScheduledTaskStepSource source;
+  final String fixedText;
+  final String? modelProvider, modelId;
+
+  ScheduledTaskStep.fromJson(Map<String, dynamic> json)
+    : prompt = json['prompt'] as String? ?? '',
+      source = ScheduledTaskStepSource.values.byName(
+        json['source'] as String? ?? 'fixedText',
+      ),
+      fixedText = json['fixedText'] as String? ?? '',
+      modelProvider = json['modelProvider'] as String?,
+      modelId = json['modelId'] as String?;
+
+  Map<String, dynamic> toJson() => {
+    'prompt': prompt,
+    'source': source.name,
+    if (fixedText.isNotEmpty) 'fixedText': fixedText,
+    if (modelProvider != null) 'modelProvider': modelProvider,
+    if (modelId != null) 'modelId': modelId,
+  };
+}
+
 enum ScheduledTaskContextPolicy { latest, snapshot }
 
 enum ScheduledTaskUnavailablePolicy { remind, skip }
@@ -50,6 +88,7 @@ class ScheduledTask {
     this.preparationCooldownMinutes = 10,
     this.revision = 0,
     this.scheduleRevision = 0,
+    this.steps = const <ScheduledTaskStep>[],
   });
 
   final String id, name, prompt, assistantId;
@@ -71,6 +110,7 @@ class ScheduledTask {
       preparationCooldownMinutes,
       revision,
       scheduleRevision;
+  final List<ScheduledTaskStep> steps;
 
   bool get canPrepare =>
       allowPreparation && mode != ScheduledTaskMode.regenerate;
@@ -167,6 +207,13 @@ class ScheduledTask {
         (json['preparationCooldownMinutes'] as int? ?? 10).clamp(1, 1440),
     revision: json['revision'] as int? ?? 0,
     scheduleRevision: json['scheduleRevision'] as int? ?? 0,
+    steps: (json['steps'] as List? ?? [])
+        .map(
+          (s) => ScheduledTaskStep.fromJson(
+            Map<String, dynamic>.from(s as Map),
+          ),
+        )
+        .toList(),
     nextRunAt: json['nextRunAt'] == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch(json['nextRunAt'] as int),
@@ -205,6 +252,8 @@ class ScheduledTask {
     'preparationCooldownMinutes': preparationCooldownMinutes,
     'revision': revision,
     'scheduleRevision': scheduleRevision,
+    if (steps.isNotEmpty)
+      'steps': steps.map((step) => step.toJson()).toList(),
   };
 
   Map<String, dynamic> toStoredJson() => {

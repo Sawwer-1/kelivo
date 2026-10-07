@@ -108,6 +108,9 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
       ScheduledTask.defaultPreparationWindowMinutes;
   late int preparationAttempts = widget.task?.maxPrepareAttempts ?? 2;
   late int preparationCooldown = widget.task?.preparationCooldownMinutes ?? 10;
+  late List<ScheduledTaskStep> steps =
+      List<ScheduledTaskStep>.of(widget.task?.steps ?? const []);
+  late bool workflowMode = steps.isNotEmpty;
   String? messagePreview;
   String? error;
   bool busy = false;
@@ -377,7 +380,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
       error = null;
     });
     try {
-      await widget.onSave(
+        await widget.onSave(
         ScheduledTask(
           id: widget.task?.id ?? const Uuid().v4(),
           name: name.text.trim(),
@@ -396,6 +399,7 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
           messageId: mode == ScheduledTaskMode.regenerate ? messageId : null,
           modelProvider: modelProvider,
           modelId: modelId,
+          steps: workflowMode ? steps : const <ScheduledTaskStep>[],
           onceDate: repeat == ScheduledTaskRepeat.once ? onceDate : null,
           startDate: repeat == ScheduledTaskRepeat.once ? null : startDate,
           endDate: repeat == ScheduledTaskRepeat.once ? null : endDate,
@@ -424,6 +428,162 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  /// G5: one workflow-step card. Source selector + prompt (+ fixed text for
+  /// the first step). Step model overrides are API-only (owner_task_create).
+  Widget _stepCard(AppLocalizations l, int index) {
+    final step = steps[index];
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(top: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(
+          color: Theme.of(context)
+              .colorScheme
+              .outlineVariant
+              .withValues(alpha: 0.4),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l.scheduledTasksStepN(index + 1),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (steps.length > 1)
+                  IconButton(
+                    tooltip: l.scheduledTasksDelete,
+                    icon: const Icon(LucideIcons.trash2, size: 16),
+                    onPressed: () => setState(
+                      () => steps = [...steps]..removeAt(index),
+                    ),
+                  ),
+              ],
+            ),
+            if (index > 0)
+              SegmentedButton<bool>(
+                segments: [
+                  ButtonSegment(
+                    value: false,
+                    label: Text(l.scheduledTasksStepSourceFixed,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    label: Text(l.scheduledTasksStepSourcePrev,
+                        style: const TextStyle(fontSize: 12)),
+                  ),
+                ],
+                selected: {
+                  step.source == ScheduledTaskStepSource.previousOutput,
+                },
+                onSelectionChanged: (selection) => _updateStep(
+                  index,
+                  ScheduledTaskStep(
+                    prompt: step.prompt,
+                    source: selection.first
+                        ? ScheduledTaskStepSource.previousOutput
+                        : ScheduledTaskStepSource.fixedText,
+                    fixedText: step.fixedText,
+                    modelProvider: step.modelProvider,
+                    modelId: step.modelId,
+                  ),
+                ),
+              )
+            else
+              Text(
+                l.scheduledTasksStepFirstNote,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.55),
+                ),
+              ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: TextEditingController(text: step.prompt),
+              minLines: 2,
+              maxLines: 6,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                labelText: l.scheduledTasksStepPrompt,
+                isDense: true,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (text) {
+                steps[index] = ScheduledTaskStep(
+                  prompt: text,
+                  source: step.source,
+                  fixedText: step.fixedText,
+                  modelProvider: step.modelProvider,
+                  modelId: step.modelId,
+                );
+              },
+            ),
+            if (step.source == ScheduledTaskStepSource.fixedText &&
+                index > 0) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: TextEditingController(text: step.fixedText),
+                minLines: 1,
+                maxLines: 4,
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: l.scheduledTasksStepFixedText,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (text) {
+                  steps[index] = ScheduledTaskStep(
+                    prompt: step.prompt,
+                    source: step.source,
+                    fixedText: text,
+                    modelProvider: step.modelProvider,
+                    modelId: step.modelId,
+                  );
+                },
+              ),
+            ],
+            if (index > 0 &&
+                step.source == ScheduledTaskStepSource.previousOutput)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  l.scheduledTasksStepUsePrevNote,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.55),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _updateStep(int index, ScheduledTaskStep step) {
+    setState(() {
+      final next = [...steps]..[index] = step;
+      steps = next;
+    });
   }
 
   Widget _dateRow(
@@ -560,6 +720,41 @@ class _ScheduledTaskEditorPageState extends State<ScheduledTaskEditorPage> {
               minLines: 4,
               maxLines: 8,
             ),
+            SwitchListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                l.scheduledTasksWorkflowSteps,
+                style: const TextStyle(fontSize: 14),
+              ),
+              subtitle: Text(
+                l.scheduledTasksWorkflowHint,
+                style: const TextStyle(fontSize: 11.5),
+              ),
+              value: workflowMode,
+              onChanged: (v) => setState(() {
+                workflowMode = v;
+                if (v && steps.isEmpty) {
+                  steps = [const ScheduledTaskStep(prompt: '')];
+                }
+              }),
+            ),
+            if (workflowMode) ...[
+              for (var i = 0; i < steps.length; i++) _stepCard(l, i),
+              TextButton.icon(
+                onPressed: () => setState(() {
+                  steps = [
+                    ...steps,
+                    const ScheduledTaskStep(
+                      prompt: '',
+                      source: ScheduledTaskStepSource.previousOutput,
+                    ),
+                  ];
+                }),
+                icon: const Icon(LucideIcons.plus, size: 16),
+                label: Text(l.scheduledTasksAddStep),
+              ),
+            ],
           ],
         ),
       ],

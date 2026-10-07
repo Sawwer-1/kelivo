@@ -22034,6 +22034,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'What would you like your assistant to do?'**
   String get scheduledTasksPromptHint;
+  /// No description provided for @scheduledTasksWorkflowSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Workflow steps'**
+  String get scheduledTasksWorkflowSteps;
+
+  /// No description provided for @scheduledTasksWorkflowHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Run multiple steps in order; each step can use the previous step\'s output.'**
+  String get scheduledTasksWorkflowHint;
+
+  /// No description provided for @scheduledTasksAddStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Add step'**
+  String get scheduledTasksAddStep;
+
+  /// No description provided for @scheduledTasksStepPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Step prompt'**
+  String get scheduledTasksStepPrompt;
+
+  /// No description provided for @scheduledTasksStepSourceFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed text'**
+  String get scheduledTasksStepSourceFixed;
+
+  /// No description provided for @scheduledTasksStepSourcePrev.
+  ///
+  /// In en, this message translates to:
+  /// **'Use previous output'**
+  String get scheduledTasksStepSourcePrev;
+
+  /// No description provided for @scheduledTasksStepFixedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed text (input for this step)'**
+  String get scheduledTasksStepFixedText;
+
+  /// No description provided for @scheduledTasksStepFirstNote.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the first step; it cannot use a previous output.'**
+  String get scheduledTasksStepFirstNote;
+
+  /// No description provided for @scheduledTasksStepUsePrevNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous step\'s reply is added before this prompt.'**
+  String get scheduledTasksStepUsePrevNote;
+
+  /// No description provided for @scheduledTasksStepN.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {n}'**
+  String scheduledTasksStepN(int n);
+
 
   /// No description provided for @scheduledTasksAssistant.
   ///

@@ -11651,6 +11651,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scheduledTasksPromptHint => '希望助手为你完成什么？';
+  String get scheduledTasksWorkflowSteps => '工作流步骤';
+  String get scheduledTasksWorkflowHint => '按顺序执行多个步骤，每步可使用上一步的输出。';
+  String get scheduledTasksAddStep => '添加步骤';
+  String get scheduledTasksStepPrompt => '步骤提示词';
+  String get scheduledTasksStepSourceFixed => '固定文本';
+  String get scheduledTasksStepSourcePrev => '使用上一步输出';
+  String get scheduledTasksStepFixedText => '固定文本（本步骤的输入）';
+  String get scheduledTasksStepFirstNote => '这是第一步，不能使用上一步输出。';
+  String get scheduledTasksStepUsePrevNote => '上一步的回复将拼接在本提示词之前。';
+  String scheduledTasksStepN(int n) {
+    return '步骤 $n';
+  }
 
   @override
   String get scheduledTasksAssistant => '执行助手';
@@ -24023,6 +24035,18 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get scheduledTasksPromptHint => '希望助手为你完成什么？';
+  String get scheduledTasksWorkflowSteps => '工作流步骤';
+  String get scheduledTasksWorkflowHint => '按顺序执行多个步骤，每步可使用上一步的输出。';
+  String get scheduledTasksAddStep => '添加步骤';
+  String get scheduledTasksStepPrompt => '步骤提示词';
+  String get scheduledTasksStepSourceFixed => '固定文本';
+  String get scheduledTasksStepSourcePrev => '使用上一步输出';
+  String get scheduledTasksStepFixedText => '固定文本（本步骤的输入）';
+  String get scheduledTasksStepFirstNote => '这是第一步，不能使用上一步输出。';
+  String get scheduledTasksStepUsePrevNote => '上一步的回复将拼接在本提示词之前。';
+  String scheduledTasksStepN(int n) {
+    return '步骤 $n';
+  }
 
   @override
   String get scheduledTasksAssistant => '执行助手';
@@ -36437,6 +36461,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get scheduledTasksPromptHint => '希望助手為你完成什麼？';
+  String get scheduledTasksWorkflowSteps => '工作流步驟';
+  String get scheduledTasksWorkflowHint => '按順序執行多個步驟，每步可使用上一步的輸出。';
+  String get scheduledTasksAddStep => '新增步驟';
+  String get scheduledTasksStepPrompt => '步驟提示詞';
+  String get scheduledTasksStepSourceFixed => '固定文字';
+  String get scheduledTasksStepSourcePrev => '使用上一步輸出';
+  String get scheduledTasksStepFixedText => '固定文字（本步驟的輸入）';
+  String get scheduledTasksStepFirstNote => '這是第一步，不能使用上一步輸出。';
+  String get scheduledTasksStepUsePrevNote => '上一步的回覆將拼接在本提示詞之前。';
+  String scheduledTasksStepN(int n) {
+    return '步驟 $n';
+  }
 
   @override
   String get scheduledTasksAssistant => '執行助手';
