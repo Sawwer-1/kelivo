@@ -96,6 +96,14 @@ class HotkeyProvider extends ChangeNotifier {
       defaultMac: 'cmd+bracketright',
       enabledByDefault: true,
     ),
+    // Quick capture: screenshot the full screen and ask about it (F2)
+    'quick_capture': AppHotkey(
+      id: 'quick_capture',
+      l10nLabelKey: 'hotkeyQuickCapture',
+      defaultWinLinux: 'ctrl+alt+q',
+      defaultMac: 'cmd+alt+q',
+      enabledByDefault: true,
+    ),
   };
 
   final Map<String, HotKey> _registered = <String, HotKey>{};
@@ -257,6 +265,9 @@ class HotkeyProvider extends ChangeNotifier {
         break;
       case 'toggle_topics':
         HotkeyEventBus.instance.fire(HotkeyAction.toggleLeftPanelTopics);
+        break;
+      case 'quick_capture':
+        HotkeyEventBus.instance.fire(HotkeyAction.quickCapture);
         break;
     }
   }

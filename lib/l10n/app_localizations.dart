@@ -12539,6 +12539,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Owner: memory write'**
   String get ownerToolMemoryWriteTitle;
+  /// No description provided for @hotkeyQuickCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick capture (screenshot & ask)'**
+  String get hotkeyQuickCapture;
+
+  /// No description provided for @quickCaptureDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick capture'**
+  String get quickCaptureDialogTitle;
+
+  /// No description provided for @quickCapturePromptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What do you want to ask about this screenshot?'**
+  String get quickCapturePromptLabel;
+
+  /// No description provided for @quickCaptureDefaultPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Explain this screenshot'**
+  String get quickCaptureDefaultPrompt;
+
+  /// No description provided for @quickCaptureSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send to chat'**
+  String get quickCaptureSend;
+
+  /// No description provided for @quickCaptureCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get quickCaptureCancel;
+
 
   /// No description provided for @messageMoreSheetContinueOverwriteTitle.
   ///

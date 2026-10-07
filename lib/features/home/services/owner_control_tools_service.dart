@@ -600,12 +600,23 @@ class OwnerControlTools {
     if (enabled is! bool) {
       return _error('missing_argument', 'enabled must be true or false.');
     }
-    final server = mcp.servers
+    final matches = mcp.servers
         .where((candidate) => candidate.id == key || candidate.name == key)
-        .firstOrNull;
-    if (server == null) {
+        .toList(growable: false);
+    if (matches.isEmpty) {
       return _error('not_found', "No MCP server matches '$key'.");
     }
+    if (matches.length > 1) {
+      return jsonEncode({
+        'error': 'ambiguous_server',
+        'message': "Multiple servers match '$key' by name; retry with the "
+            'exact id from owner_mcp_list.',
+        'candidates': [
+          for (final s in matches) {'id': s.id, 'name': s.name},
+        ],
+      });
+    }
+    final server = matches.single;
     if (server.enabled == enabled) {
       return jsonEncode({
         'ok': true,
@@ -687,6 +698,9 @@ class OwnerControlTools {
       case 'create':
         return _memoryCreate(args, memory, ownerContext);
       case 'update_content':
+        if (memoryId.isEmpty) {
+          return _error('missing_argument', 'memory_id is required.');
+        }
         final content = '${args['content'] ?? ''}'.trim();
         if (content.isEmpty) {
           return _error('missing_argument', 'content is required.');
@@ -703,6 +717,9 @@ class OwnerControlTools {
         }
         return jsonEncode({'ok': true, 'entry': _memoryRow(updated)});
       case 'update_type':
+        if (memoryId.isEmpty) {
+          return _error('missing_argument', 'memory_id is required.');
+        }
         final type = _memoryTypeArg(args['type']);
         if (type == null) {
           return _error(
@@ -811,6 +828,15 @@ class OwnerControlTools {
       }
     }
     final conversationId = '${args['conversation_id'] ?? ''}'.trim();
+    if (conversationId.isNotEmpty && scopeName == 'global') {
+      // repository._validateScope would reject this with a bare
+      // ArgumentError; fail here with the family's own error shape instead.
+      return _error(
+        'invalid_value',
+        'conversation_id requires scope=assistant (conversation-bound '
+            'memories are assistant-scoped).',
+      );
+    }
     if (conversationId.isNotEmpty &&
         ownerContext?.chatService?.getConversation(conversationId) == null) {
       return _error(

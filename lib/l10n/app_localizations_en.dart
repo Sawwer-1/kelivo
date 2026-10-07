@@ -6857,6 +6857,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ownerToolMcpToggleTitle => 'Owner: toggle MCP server';
   String get ownerToolMemoryListTitle => 'Owner: memory list';
   String get ownerToolMemoryWriteTitle => 'Owner: memory write';
+  String get hotkeyQuickCapture => 'Quick capture (screenshot & ask)';
+  String get quickCaptureDialogTitle => 'Quick capture';
+  String get quickCapturePromptLabel => 'What do you want to ask about this screenshot?';
+  String get quickCaptureDefaultPrompt => 'Explain this screenshot';
+  String get quickCaptureSend => 'Send to chat';
+  String get quickCaptureCancel => 'Cancel';
   String get messageMoreSheetContinueOverwriteTitle => 'Continue generation';
   String get messageMoreSheetContinueOverwriteBody => 'This message already has content. Continuing will regenerate it from scratch and replace the current text.';
   String get messageMoreSheetContinueOverwriteConfirm => 'Regenerate';

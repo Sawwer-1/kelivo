@@ -15,6 +15,7 @@ import 'hotkeys/hotkey_event_bus.dart';
 import 'hotkeys/chat_action_bus.dart';
 import 'desktop_settings_navigation_bus.dart';
 import '../core/services/notification_service.dart';
+import 'quick_capture/quick_capture_service.dart';
 
 /// Desktop home screen: left compact rail + main content.
 /// Phase 1 focuses on structure and platform-appropriate interactions/hover.
@@ -125,6 +126,13 @@ class _DesktopHomePageState extends State<DesktopHomePage> {
         case HotkeyAction.toggleLeftPanelTopics:
           if (_tabIndex == 0) {
             ChatActionBus.instance.fire(ChatAction.toggleLeftPanelTopics);
+          }
+          break;
+        case HotkeyAction.quickCapture:
+          // F2: full-screen shot taken before the window is raised, so the
+          // capture shows the screen as the user saw it at hotkey time.
+          if (mounted) {
+            await QuickCaptureService.captureAndAsk(context);
           }
           break;
       }

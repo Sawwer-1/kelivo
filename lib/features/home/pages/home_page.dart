@@ -6,6 +6,7 @@ import 'package:desktop_drop/desktop_drop.dart';
 import 'package:provider/provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../main.dart';
+import '../../../desktop/hotkeys/chat_action_bus.dart';
 import '../../../shared/widgets/interactive_drawer.dart';
 import '../../../shared/responsive/breakpoints.dart';
 import '../../../shared/widgets/ios_form_text_field.dart';
@@ -726,6 +727,10 @@ class _HomePageState extends State<HomePage>
 
   late HomePageController _controller;
 
+  /// F2 QuickCapture: screenshot+question payloads fired by the desktop
+  /// hotkey flow are sent through the normal composer path here.
+  StreamSubscription<QuickCaptureSend>? _quickCaptureSub;
+
   // ============================================================================
   // Lifecycle
   // ============================================================================
@@ -751,6 +756,17 @@ class _HomePageState extends State<HomePage>
     _controller.onRevealConversation = () => _drawerController.jumpTo(0);
     _controller.addListener(_onControllerChanged);
     _drawerController.addListener(_onDrawerValueChanged);
+
+    _quickCaptureSub = ChatActionBus.instance.quickCaptureSends.listen(
+      (payload) {
+        _controller.sendMessage(
+          ChatInputData(
+            text: payload.text,
+            imagePaths: [payload.imagePath],
+          ),
+        );
+      },
+    );
 
     _chatReady = _controller.initChat();
     _initProcessText();
@@ -810,6 +826,7 @@ class _HomePageState extends State<HomePage>
       WidgetsBinding.instance.removeObserver(this);
     } catch (_) {}
     _processTextSub?.cancel();
+    _quickCaptureSub?.cancel();
     _incomingShares?.dispose();
     _controller.removeListener(_onControllerChanged);
     _drawerController.removeListener(_onDrawerValueChanged);
